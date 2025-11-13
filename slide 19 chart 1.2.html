@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Chart with Data Table</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            color: #333;
+        }
+
+        .chart-header {
+            width: 90%;
+            max-width: 900px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .chart-header h1 {
+            font-size: 1.6em;
+            color: #071C2C;
+            margin-bottom: 5px;
+        }
+        .chart-header .underline {
+            height: 3px;
+            background-color: #8B7053;
+            width: 50%;
+            margin: 0 auto 15px auto;
+        }
+
+        /* Chart Card */
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 900px;
+            height: 400px;
+            margin-bottom: 30px;
+        }
+
+        /* Table Styling */
+        .table-container {
+            width: 90%;
+            max-width: 900px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            overflow-x: auto; /* Handles small screens */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #071C2C;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        /* Input Styling inside table */
+        input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            border-color: #8B7053;
+            outline: none;
+            background-color: #fffdf5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chart-header">
+    <h1>Vietnam FDI Disbursement (Editable)</h1>
+    <div class="underline"></div>
+</div>
+
+<div class="chart-card">
+    <canvas id="myChart"></canvas>
+</div>
+
+<div class="table-container">
+    <h3>Edit Data Below to Update Chart</h3>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Year</th>
+                <th>FDI Disbursement (Billion USD)</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<script>
+    const ctx = document.getElementById('myChart').getContext('2d');
+
+    // --- Initial Data ---
+    const initialData = [
+        { year: '2008', value: 11.2 },
+        { year: '2009', value: 10.0 },
+        { year: '2010', value: 10.8 },
+        { year: '2011', value: 10.5 },
+        { year: '2012', value: 10.3 },
+        { year: '2013', value: 11.5 },
+        { year: '2014', value: 12.5 },
+        { year: '2015', value: 14.3 },
+        { year: '2016', value: 15.6 },
+        { year: '2017', value: 17.5 },
+        { year: '2018', value: 19.0 },
+        { year: '2019', value: 20.3 },
+        { year: '2020', value: 19.8 },
+        { year: '2021', value: 19.9 },
+        { year: '2022', value: 22.0 },
+        { year: '2023', value: 23.0 },
+        { year: '2024', value: 25.5 },
+        { year: 'Apr-25', value: 6.5 }
+    ];
+
+    // Extract arrays for Chart.js
+    let labels = initialData.map(d => d.year);
+    let dataValues = initialData.map(d => d.value);
+
+    // --- Colors ---
+    const startColor = [149, 188, 166]; // #95BCA6 (RGB)
+    const endColor = [74, 124, 112];    // #4A7C70 (RGB)
+    const specialColor = '#8B7053';     // Brown for Apr-25
+
+    // Function to generate gradient colors
+    function getGradientColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            if (i === count - 1) {
+                colors.push(specialColor); // Last bar is special
+            } else {
+                const ratio = i / (count - 2);
+                const r = Math.round(startColor[0] + ratio * (endColor[0] - startColor[0]));
+                const g = Math.round(startColor[1] + ratio * (endColor[1] - startColor[1]));
+                const b = Math.round(startColor[2] + ratio * (endColor[2] - startColor[2]));
+                colors.push(`rgb(${r}, ${g}, ${b})`);
+            }
+        }
+        return colors;
+    }
+
+    // --- Create Chart ---
+    const myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'FDI Disbursement',
+                data: dataValues,
+                backgroundColor: getGradientColors(labels.length),
+                borderRadius: 4,
+                barPercentage: 0.7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#e0e0e0', borderDash: [5, 5] },
+                    ticks: { color: '#58595B' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#58595B' }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.raw + ' Billion';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // --- Generate Table Logic ---
+    const tableBody = document.querySelector('#dataTable tbody');
+
+    function renderTable() {
+        tableBody.innerHTML = ''; // Clear existing rows
+        
+        // Loop through chart data to create rows
+        myChart.data.labels.forEach((label, index) => {
+            const val = myChart.data.datasets[0].data[index];
+            
+            const tr = document.createElement('tr');
+            
+            // Year Cell
+            const tdYear = document.createElement('td');
+            tdYear.textContent = label;
+            tr.appendChild(tdYear);
+            
+            // Input Cell
+            const tdVal = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = '0.1'; // Allow decimals
+            input.value = val;
+            
+            // Add Event Listener to Input
+            input.addEventListener('input', (e) => {
+                const newValue = parseFloat(e.target.value);
+                updateChartData(index, newValue);
+            });
+            
+            tdVal.appendChild(input);
+            tr.appendChild(tdVal);
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // --- Update Chart Function ---
+    function updateChartData(index, newValue) {
+        // Update the data array in the chart object
+        myChart.data.datasets[0].data[index] = newValue;
+        // Re-render the chart to show changes
+        myChart.update(); 
+    }
+
+    // Initial Render
+    renderTable();
+
+</script>
+
+</body>
+</html>

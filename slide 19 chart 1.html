@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vietnam FDI Disbursement Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.0.0/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            color: #333;
+        }
+
+        .chart-header {
+            width: 90%;
+            max-width: 900px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .chart-header h1 {
+            font-size: 1.6em;
+            color: #071C2C; /* Default Title Color */
+            margin-bottom: 5px;
+        }
+        .chart-header .underline {
+            height: 3px;
+            background-color: #8B7053; /* Default Underline Color */
+            width: 50%;
+            margin: 0 auto 15px auto;
+        }
+
+        /* Control Panel */
+        .controls {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #58595B; /* Default Label Color */
+            font-size: 13px;
+        }
+
+        input[type="color"] {
+            border: none;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            border-radius: 4px;
+        }
+
+        /* Chart Card */
+        .chart-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 900px;
+            height: 500px;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chart-header">
+    <h1>Vietnam FDI Disbursement from 2008-2025</h1>
+    <div class="underline"></div>
+</div>
+
+<div class="controls">
+    <div class="control-group">
+        <label for="barStartColor">Bar Start Color:</label>
+        <input type="color" id="barStartColor" value="#95BCA6"> 
+    </div>
+    <div class="control-group">
+        <label for="barEndColor">Bar End Color:</label>
+        <input type="color" id="barEndColor" value="#4A7C70"> 
+    </div>
+    <div class="control-group">
+        <label for="apr25Color">Apr-25 Bar Color:</label>
+        <input type="color" id="apr25Color" value="#8B7053"> 
+    </div>
+    <div class="control-group">
+        <label for="textColor">Text & Grids:</label>
+        <input type="color" id="textColor" value="#58595B"> 
+    </div>
+    <div class="control-group">
+        <label for="titleColor">Title:</label>
+        <input type="color" id="titleColor" value="#071C2C"> 
+    </div>
+</div>
+
+<div class="chart-card">
+    <canvas id="fdiDisbursementChart"></canvas>
+</div>
+
+<script>
+    Chart.register(ChartDataLabels);
+
+    const ctx = document.getElementById('fdiDisbursementChart').getContext('2d');
+
+    // --- Data from your image ---
+    const years = ['2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', 'Apr-25'];
+    const disbursement = [11.2, 10.0, 10.8, 10.5, 10.3, 11.5, 12.5, 14.3, 15.6, 17.5, 19.0, 20.3, 19.8, 19.9, 22.0, 23.0, 25.5, 6.5];
+
+    // --- Color Interpolation Function ---
+    // This function will generate a gradient of colors for the bars
+    function interpolateColor(color1, color2, factor) {
+        var result = color1.slice();
+        for (var i = 1; i < 7; i += 2) { // Skip # and iterate R, G, B
+            var c1 = parseInt(color1.substr(i, 2), 16);
+            var c2 = parseInt(color2.substr(i, 2), 16);
+            var c = Math.round(c1 + factor * (c2 - c1));
+            result = result.slice(0, i) + ('0' + c.toString(16)).slice(-2) + result.slice(i + 2);
+        }
+        return result;
+    }
+
+    function generateBarColors(startColor, endColor, apr25Color) {
+        const colors = [];
+        const totalBars = years.length;
+        for (let i = 0; i < totalBars; i++) {
+            if (years[i] === 'Apr-25') {
+                colors.push(apr25Color);
+            } else {
+                const factor = i / (totalBars - 2); // -2 because Apr-25 is special
+                colors.push(interpolateColor(startColor, endColor, factor));
+            }
+        }
+        return colors;
+    }
+
+    // --- Initial Colors ---
+    let currentBarStartColor = document.getElementById('barStartColor').value;
+    let currentBarEndColor = document.getElementById('barEndColor').value;
+    let currentApr25Color = document.getElementById('apr25Color').value;
+    let currentTextColor = document.getElementById('textColor').value;
+    let currentTitleColor = document.getElementById('titleColor').value;
+
+    const fdiDisbursementChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [{
+                label: 'FDI Disbursement',
+                data: disbursement,
+                backgroundColor: generateBarColors(currentBarStartColor, currentBarEndColor, currentApr25Color),
+                borderRadius: 4,
+                barPercentage: 0.7,
+                categoryPercentage: 0.8,
+                datalabels: {
+                    display: false // No datalabels in the image, keep them off by default
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} Billion` }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 30, // Max of Y-axis from image
+                    title: {
+                        display: false, // No title on Y-axis in image
+                        text: 'USD Billion', // But keep for reference
+                        color: currentTextColor
+                    },
+                    ticks: {
+                        color: currentTextColor,
+                        font: { size: 13 }
+                    },
+                    grid: { color: '#e0e0e0', borderDash: [5, 5] }
+                },
+                x: {
+                    ticks: {
+                        color: currentTextColor,
+                        font: { size: 13 }
+                    },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    // --- Function to Update Colors ---
+    function updateColors() {
+        currentBarStartColor = document.getElementById('barStartColor').value;
+        currentBarEndColor = document.getElementById('barEndColor').value;
+        currentApr25Color = document.getElementById('apr25Color').value;
+        currentTextColor = document.getElementById('textColor').value;
+        currentTitleColor = document.getElementById('titleColor').value;
+
+        // Update Bar Colors with new gradient
+        fdiDisbursementChart.data.datasets[0].backgroundColor = generateBarColors(currentBarStartColor, currentBarEndColor, currentApr25Color);
+        
+        // Update Text Elements
+        fdiDisbursementChart.options.scales.y.ticks.color = currentTextColor;
+        fdiDisbursementChart.options.scales.x.ticks.color = currentTextColor;
+        fdiDisbursementChart.options.scales.y.title.color = currentTextColor; // If title is ever enabled
+
+        // Update DOM Title/Underline
+        document.querySelector('.chart-header h1').style.color = currentTitleColor;
+        document.querySelector('.chart-header .underline').style.backgroundColor = currentApr25Color; // Underline matches Apr-25 bar
+
+        fdiDisbursementChart.update();
+    }
+
+    // --- Add Event Listeners ---
+    document.getElementById('barStartColor').addEventListener('input', updateColors);
+    document.getElementById('barEndColor').addEventListener('input', updateColors);
+    document.getElementById('apr25Color').addEventListener('input', updateColors);
+    document.getElementById('textColor').addEventListener('input', updateColors);
+    document.getElementById('titleColor').addEventListener('input', updateColors);
+</script>
+
+</body>
+</html>

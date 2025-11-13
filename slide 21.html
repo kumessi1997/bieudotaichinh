@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exports vs. Imports Chart</title>
+    <!-- 1. Import Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f7f9fc;
+            color: #333;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Color controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+        }
+        .controls-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .controls-group label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9em;
+        }
+        .controls-group input[type="color"] {
+            width: 45px;
+            height: 45px;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            border-radius: 8px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: transparent;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+            border-radius: 8px;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        /* Container for the chart canvas, with fixed height */
+        .chart-container {
+            width: 90%;
+            max-width: 1000px;
+            height: 400px; /* User-requested height */
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            position: relative;
+        }
+
+        /* Data modification table */
+        .data-table-container {
+            width: 90%;
+            max-width: 1000px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-top: 30px;
+            overflow-x: auto; /* For small screens */
+        }
+        .data-table-container h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f9f9f9;
+            color: #333;
+            font-size: 0.9em;
+            min-width: 100px;
+        }
+        td input {
+            width: 80px;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 1em;
+        }
+        td:first-child {
+            font-weight: 600;
+            background-color: #f9f9f9;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Exports vs. Imports Growth (% Change)</h1>
+
+    <!-- 2. Color Controls -->
+    <div class="controls">
+        <div class="controls-group">
+            <label>Exports Color</label>
+            <input type="color" id="colorExports" value="#8B7053">
+        </div>
+        <div class="controls-group">
+            <label>Imports Color</label>
+            <input type="color" id="colorImports" value="#071C2C">
+        </div>
+    </div>
+
+    <!-- 3. Chart Container -->
+    <div class="chart-container">
+        <canvas id="myLineChart"></canvas>
+    </div>
+
+    <!-- 4. Data Modification Table -->
+    <div class="data-table-container">
+        <h2>Modify Chart Data</h2>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Exports (%)</th>
+                    <th>Imports (%)</th>
+                </tr>
+            </thead>
+            <!-- This table body will be populated by JavaScript -->
+            <tbody id="dataTableBody">
+                <!-- Data rows will be generated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // --- GLOBAL DATA STORE ---
+        // Data estimated from the provided line chart image
+        let chartDataStore = {
+            labels: ['Sep-19', 'Mar-20', 'Sep-20', 'Mar-21', 'Sep-21', 'Mar-22', 'Sep-22', 'Mar-23', 'Sep-23', 'Mar-24', 'Sep-24', 'Mar-25', 'Sep-25'],
+            datasets: [
+                {
+                    label: 'Exports',
+                    data: [10, -5, 12, 30, 2, 20, 10, -10, -5, 18, 15, 10, 20],
+                    borderColor: '#8B7053', // User color 1
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#8B7053',
+                    tension: 0.1 // Slight curve
+                },
+                {
+                    label: 'Imports',
+                    data: [6, -10, 15, 48, 18, 22, 6, -15, -20, 20, 22, 25, 18],
+                    borderColor: '#071C2C', // User color 2
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#071C2C',
+                    tension: 0.1 // Slight curve
+                }
+            ]
+        };
+
+        // --- CHART INSTANCE ---
+        let myChart;
+        const ctx = document.getElementById('myLineChart').getContext('2d');
+        const thirdColor = '#58595B'; // User color 3 for text/grids
+
+        // --- RENDER FUNCTIONS ---
+
+        /**
+         * Renders the main line chart
+         */
+        function renderChart() {
+            if (myChart) {
+                myChart.destroy(); // Clear old chart
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: chartDataStore,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // CRITICAL for fixed height container
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: -30,
+                            max: 60,
+                            grid: {
+                                color: '#58595B30', // Use third color with alpha
+                                zeroLineColor: thirdColor,
+                                zeroLineWidth: 2,
+                            },
+                            ticks: {
+                                color: thirdColor, // Use third color for text
+                                // Add '%' suffix to Y-axis labels
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false, // No vertical grid lines
+                            },
+                            ticks: {
+                                color: thirdColor, // Use third color for text
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom', // Match image
+                            labels: {
+                                color: thirdColor, // Use third color for text
+                                usePointStyle: true,
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                // Add '%' suffix to tooltip labels
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                }
+            });
+        }
+
+        /**
+         * Populates the data modification table from the global data store
+         */
+        function populateTable() {
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '';
+
+            chartDataStore.labels.forEach((label, index) => {
+                const row = document.createElement('tr');
+
+                // 1. Date Label
+                const labelCell = document.createElement('td');
+                labelCell.textContent = label;
+                row.appendChild(labelCell);
+
+                // 2. Exports Input
+                const exportsCell = document.createElement('td');
+                const exportsInput = document.createElement('input');
+                exportsInput.type = 'number';
+                exportsInput.value = chartDataStore.datasets[0].data[index];
+                exportsInput.setAttribute('data-index', index);
+                exportsInput.setAttribute('data-dataset', 0);
+                exportsInput.addEventListener('change', updateDataFromTable);
+                exportsCell.appendChild(exportsInput);
+                row.appendChild(exportsCell);
+
+                // 3. Imports Input
+                const importsCell = document.createElement('td');
+                const importsInput = document.createElement('input');
+                importsInput.type = 'number';
+                importsInput.value = chartDataStore.datasets[1].data[index];
+                importsInput.setAttribute('data-index', index);
+                importsInput.setAttribute('data-dataset', 1);
+                importsInput.addEventListener('change', updateDataFromTable);
+                importsCell.appendChild(importsInput);
+                row.appendChild(importsCell);
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * Reads a value from the table and updates the chart
+         */
+        function updateDataFromTable(event) {
+            const index = parseInt(event.target.dataset.index);
+            const datasetIndex = parseInt(event.target.dataset.dataset);
+            const value = parseFloat(event.target.value) || 0;
+
+            // Update the central data store
+            chartDataStore.datasets[datasetIndex].data[index] = value;
+
+            // Re-render the chart
+            renderChart();
+        }
+
+        /**
+         * Reads color pickers and updates the chart
+         */
+        function updateChartColors() {
+            const exportsColor = document.getElementById('colorExports').value;
+            const importsColor = document.getElementById('colorImports').value;
+
+            // Update the central data store
+            chartDataStore.datasets[0].borderColor = exportsColor;
+            chartDataStore.datasets[0].pointBackgroundColor = exportsColor;
+            
+            chartDataStore.datasets[1].borderColor = importsColor;
+            chartDataStore.datasets[1].pointBackgroundColor = importsColor;
+
+            // Re-render the chart
+            renderChart();
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Populate the interactive elements
+            populateTable();
+
+            // 2. Set up event listeners for color pickers
+            document.getElementById('colorExports').addEventListener('input', updateChartColors);
+            document.getElementById('colorImports').addEventListener('input', updateChartColors);
+
+            // 3. Initial render
+            renderChart();
+        });
+
+    </script>
+</body>
+</html>

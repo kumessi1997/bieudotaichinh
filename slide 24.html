@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YTD Performance Chart</title>
+    <!-- 1. Import Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 2. Import Chart.js Datalabels plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f7f9fc;
+            color: #333;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Color controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+        }
+        .controls-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .controls-group label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9em;
+        }
+        .controls-group input[type="color"] {
+            width: 45px;
+            height: 45px;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        /* Container for the chart canvas, with fixed aspect ratio */
+        .chart-container {
+            width: 90%;
+            max-width: 1000px;
+            /* Aspect ratio 9:5 (width:height) as 5:9 (height:width) */
+            aspect-ratio: 9 / 5;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            position: relative;
+        }
+
+        /* Data modification table */
+        .data-table-container {
+            width: 90%;
+            max-width: 1000px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-top: 30px;
+            overflow-x: auto; /* For small screens */
+        }
+        .data-table-container h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f9f9f9;
+            color: #333;
+            font-size: 0.9em;
+        }
+        td input[type="text"] {
+            width: 95%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        td input[type="number"] {
+            width: 100px;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>YTD Performance Comparison</h1>
+
+    <!-- 2. Color Controls -->
+    <div class="controls">
+        <div class="controls-group">
+            <label>Positive Color</label>
+            <input type="color" id="colorPositive" value="#8B7053">
+        </div>
+        <div class="controls-group">
+            <label>Negative Color</label>
+            <input type="color" id="colorNegative" value="#071C2C">
+        </div>
+    </div>
+
+    <!-- 3. Chart Container -->
+    <div class="chart-container">
+        <canvas id="myHorizontalBarChart"></canvas>
+    </div>
+
+    <!-- 4. Data Modification Table -->
+    <div class="data-table-container">
+        <h2>Modify Chart Data</h2>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Label</th>
+                    <th>YTD (%)</th>
+                </tr>
+            </thead>
+            <!-- This table body will be populated by JavaScript -->
+            <tbody id="dataTableBody">
+                <!-- Data rows will be generated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // --- Register Plugins ---
+        Chart.register(ChartDataLabels);
+
+        // --- GLOBAL DATA STORE ---
+        // Data estimated from the provided image
+        let chartDataStore = [
+            { label: 'KOSPI Index (Korea)', value: 43 },
+            { label: 'VN-Index (Vietnam)', value: 31 },
+            { label: 'MSCI Emerging Markets ETF (Global)', value: 29 },
+            { label: 'Bitcoin Spot Price (USD)', value: 22 },
+            { label: 'Shanghai Composite Index (China)', value: 16 },
+            { label: 'S&P 500 Index (US)', value: 14 },
+            { label: 'TAIEX Index (Taiwan)', value: 12 },
+            { label: 'Nifty 50 Index (India)', value: 4 },
+            { label: 'FTSE Bursa Malaysia KLCI (Malaysia)', value: -2 },
+            { label: 'SET Index (Thailand)', value: -9 }
+        ];
+
+        // --- CHART INSTANCE ---
+        let myChart;
+        const ctx = document.getElementById('myHorizontalBarChart').getContext('2d');
+        const gridColor = '#58595B'; // User color 3 for text/grids
+
+        // --- RENDER FUNCTIONS ---
+
+        /**
+         * Renders the main horizontal bar chart
+         */
+        function renderChart() {
+            if (myChart) {
+                myChart.destroy(); // Clear old chart
+            }
+
+            // Reverse data for display (bottom-up in image)
+            const reversedData = [...chartDataStore].reverse();
+
+            const labels = reversedData.map(d => d.label);
+            const values = reversedData.map(d => d.value);
+
+            const colorPositive = document.getElementById('colorPositive').value;
+            const colorNegative = document.getElementById('colorNegative').value;
+
+            // Dynamically assign colors based on value
+            const backgroundColors = values.map(v => (v >= 0 ? colorPositive : colorNegative));
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '% YTD, Local currency',
+                        data: values,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // This makes it a horizontal bar chart
+                    responsive: true,
+                    maintainAspectRatio: false, // CRITICAL for aspect-ratio container
+                    scales: {
+                        y: {
+                            ticks: {
+                                color: gridColor, // Use third color for text
+                            },
+                            grid: {
+                                display: false, // No vertical grid lines
+                            }
+                        },
+                        x: {
+                            position: 'bottom',
+                            min: -20,
+                            max: 50,
+                            grid: {
+                                color: `${gridColor}30`, // Use third color with alpha
+                                zeroLineColor: gridColor,
+                                zeroLineWidth: 1,
+                            },
+                            ticks: {
+                                color: gridColor, // Use third color for text
+                                // Add '%' suffix to X-axis labels
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false, // Hide legend, as requested by image
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.x + '%';
+                                }
+                            }
+                        },
+                        // Datalabels plugin configuration
+                        datalabels: {
+                            color: gridColor,
+                            anchor: 'end',
+                            // Align text to the right (positive) or left (negative)
+                            align: (context) => (context.dataset.data[context.dataIndex] >= 0 ? 'right' : 'left'),
+                            padding: {
+                                left: 6,
+                                right: 6
+                            },
+                            // Format the label as "value%"
+                            formatter: (value) => {
+                                return value + '%';
+                            },
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * Populates the data modification table from the global data store
+         */
+        function populateTable() {
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '';
+
+            chartDataStore.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <input type="text" value="${item.label}" data-index="${index}" data-field="label">
+                    </td>
+                    <td>
+                        <input type="number" value="${item.value}" data-index="${index}" data-field="value">
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Add event listener to the whole table body
+            tableBody.addEventListener('change', updateDataFromTable);
+        }
+
+        /**
+         * Reads a value from the table and updates the chart
+         */
+        function updateDataFromTable(event) {
+            if (event.target.tagName !== 'INPUT') return;
+
+            const index = parseInt(event.target.dataset.index);
+            const field = event.target.dataset.field;
+            const value = (field === 'value') ? parseFloat(event.target.value) : event.target.value;
+
+            // Update the central data store
+            chartDataStore[index][field] = value;
+
+            // Re-render the chart
+            renderChart();
+        }
+
+        /**
+         * Reads color pickers and updates the chart
+         */
+        function updateChartColors() {
+            // No need to update store, just re-render
+            renderChart();
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Populate the interactive elements
+            populateTable();
+
+            // 2. Set up event listeners for color pickers
+            document.getElementById('colorPositive').addEventListener('input', updateChartColors);
+            document.getElementById('colorNegative').addEventListener('input', updateChartColors);
+
+            // 3. Initial render
+            renderChart();
+        });
+
+    </script>
+</body>
+</html>

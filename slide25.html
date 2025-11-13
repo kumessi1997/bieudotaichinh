@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vietnam's 2025 Stock Market Growth Cycle</title>
+    <!-- 1. Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. Load Chart.js (Annotation plugin no longer needed) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Use the Inter font, which is clean and modern */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Improve the appearance of color pickers */
+        input[type="color"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0;
+        }
+        input[type="color"]::-moz-color-swatch {
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0;
+        }
+    </style>
+    <!-- Pre-load Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+    <div class="container mx-auto max-w-7xl p-4 md:p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">Chart: Key phases in Vietnam's 2025 stock market growth cycle</h1>
+
+        <!-- Color Controls -->
+        <div class="mb-6 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4">Chart Color Controls</h2>
+            <div class="flex flex-wrap gap-6">
+                <div class="flex flex-col">
+                    <label for="lineColor" class="mb-2 font-medium text-sm text-gray-700">Line Color</label>
+                    <input type="color" id="lineColor" value="#8B7053">
+                </div>
+                <div class="flex flex-col">
+                    <label for="keyPointColor" class="mb-2 font-medium text-sm text-gray-700">Key Point Color</label>
+                    <input type="color" id="keyPointColor" value="#071C2C">
+                </div>
+                <div class="flex flex-col">
+                    <label for="textColor" class="mb-2 font-medium text-sm text-gray-700">Text & Grids</label>
+                    <input type="color" id="textColor" value="#58595B">
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Canvas -->
+        <div class="mb-8 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+            <!-- Set a fixed aspect ratio for the chart container -->
+            <div class="relative h-[300px] md:h-[500px]">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Data Table for Editing -->
+        <div class="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4">Edit Chart Data</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Label</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value (empty for null)</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Key Point?</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Rows will be injected by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <button id="updateChartBtn" class="mt-6 px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors">
+                Update Chart from Table
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. GLOBAL VARIABLES ---
+        let myChart;
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const tableBody = document.getElementById('dataTableBody');
+        const updateChartBtn = document.getElementById('updateChartBtn');
+        const lineColorPicker = document.getElementById('lineColor');
+        const keyPointColorPicker = document.getElementById('keyPointColor');
+        const textColorPicker = document.getElementById('textColor');
+
+        // Initial color palette
+        const initialColors = {
+            line: '#8B7053',
+            keyPoint: '#071C2C',
+            text: '#58595B'
+        };
+
+        // --- 2. INITIAL DATA ---
+        // Transformed into an array of objects for easier table management
+        let chartData = [
+            { label: '2/1/25', value: 1269.71, isKey: false },
+            { label: ' ', value: 1265.05, isKey: true },
+            { label: ' ', value: null, isKey: false },
+            { label: '2/3/25', value: 1305.36, isKey: true },
+            { label: ' ', value: null, isKey: false },
+            { label: '2/4/25', value: 1308.86, isKey: true },
+            { label: ' ', value: 1210.00, isKey: true },
+            { label: ' ', value: null, isKey: false },
+            { label: '2/5/25', value: 1226.30, isKey: true },
+            { label: ' ', value: null, isKey: false },
+            { label: '2/6/25', value: 1332.60, isKey: true },
+            { label: ' ', value: null, isKey: false },
+            { label: '2/7/25', value: 1378.07, isKey: true },
+            { label: ' ', value: null, isKey: false },
+            { label: '2/8/25', value: 1502.52, isKey: true },
+            { label: ' ', value: null, isKey: false },
+            { label: '2/9/25', value: 1682.21, isKey: true },
+            { label: ' ', value: 1610.00, isKey: true },
+            { label: ' ', value: 1681.70, isKey: false }
+        ];
+
+        // --- 3. HELPER FUNCTIONS ---
+
+        /**
+         * Processes the chartData array to generate arrays for Chart.js
+         */
+        function processData(data, colors) {
+            const labels = [];
+            const values = [];
+            const pointRadii = [];
+            const pointColors = [];
+
+            data.forEach(item => {
+                labels.push(item.label);
+                values.push(item.value);
+
+                if (item.value === null) {
+                    pointRadii.push(0);
+                } else if (item.isKey) {
+                    pointRadii.push(6); // Key point radius
+                } else {
+                    pointRadii.push(4); // Normal point radius
+                }
+
+                pointColors.push(item.isKey ? colors.keyPoint : colors.line);
+            });
+
+            return { labels, values, pointRadii, pointColors };
+        }
+
+        /**
+         * Creates or updates the chart instance
+         */
+        function createChart(labels, values, pointRadii, pointColors, colors) {
+            if (myChart) {
+                myChart.destroy();
+            }
+            
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'VNIndex',
+                        data: values,
+                        borderColor: colors.line,
+                        backgroundColor: colors.line,
+                        tension: 0.1,
+                        // Styling for points
+                        pointRadius: pointRadii,
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: pointColors,
+                        pointHoverRadius: 8,
+                        spanGaps: true // Connects the line over null data points
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                color: colors.text
+                            }
+                        },
+                        tooltip: {
+                            intersect: false,
+                            mode: 'index',
+                            callbacks: {
+                                // Hide tooltip for null points
+                                filter: (tooltipItem) => tooltipItem.raw !== null
+                            }
+                        }
+                        // Annotation plugin removed
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: colors.text,
+                                // Only show labels that are not empty strings
+                                callback: function(value, index, ticks) {
+                                    const label = this.getLabelForValue(value);
+                                    return label && label.trim().length > 0 ? label : null;
+                                }
+                            },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        y: {
+                            min: 1150,
+                            max: 1800,
+                            ticks: { color: colors.text },
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * Populates the HTML table from the chartData array
+         */
+        function populateTable() {
+            tableBody.innerHTML = ''; // Clear existing rows
+            const inputClasses = "w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
+            const checkboxClasses = "h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500";
+
+            chartData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-4 py-2">
+                        <input type="text" value="${item.label}" class="${inputClasses}">
+                    </td>
+                    <td class="px-4 py-2">
+                        <input type="number" value="${item.value !== null ? item.value : ''}" class="${inputClasses}" placeholder="null">
+                    </td>
+                    <td class="px-4 py-2 text-center">
+                        <input type="checkbox" ${item.isKey ? 'checked' : ''} class="${checkboxClasses}">
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * Reads data from the table and updates the chart
+         */
+        function updateChartFromTable() {
+            const newChartData = [];
+            const rows = tableBody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                const label = inputs[0].value;
+                const valueStr = inputs[1].value;
+                const value = (valueStr === '' || valueStr === null) ? null : parseFloat(valueStr);
+                const isKey = inputs[2].checked;
+                
+                newChartData.push({ label, value, isKey });
+            });
+
+            // Update global data
+            chartData = newChartData;
+            
+            // Re-process data and update chart
+            const colors = {
+                line: lineColorPicker.value,
+                keyPoint: keyPointColorPicker.value,
+                text: textColorPicker.value
+            };
+            const { labels, values, pointRadii, pointColors } = processData(chartData, colors);
+            
+            // Update chart data
+            myChart.data.labels = labels;
+            myChart.data.datasets[0].data = values;
+            myChart.data.datasets[0].pointRadius = pointRadii;
+            myChart.data.datasets[0].pointBackgroundColor = pointColors;
+            myChart.data.datasets[0].pointBorderColor = pointColors;
+            myChart.update();
+        }
+
+        /**
+         * Updates only the colors of the chart
+         */
+        function updateChartColors() {
+            const colors = {
+                line: lineColorPicker.value,
+                keyPoint: keyPointColorPicker.value,
+                text: textColorPicker.value
+            };
+
+            // Re-process point colors
+            const { pointColors } = processData(chartData, colors);
+            
+            // Update dataset colors
+            myChart.data.datasets[0].borderColor = colors.line;
+            myChart.data.datasets[0].backgroundColor = colors.line;
+            myChart.data.datasets[0].pointBackgroundColor = pointColors;
+            myChart.data.datasets[0].pointBorderColor = pointColors;
+
+            // Update scale and legend colors
+            myChart.options.plugins.legend.labels.color = colors.text;
+            myChart.options.scales.x.ticks.color = colors.text;
+            myChart.options.scales.y.ticks.color = colors.text;
+            
+            myChart.update();
+        }
+
+        // --- 4. INITIALIZATION ---
+        window.onload = () => {
+            // Set initial color picker values
+            lineColorPicker.value = initialColors.line;
+            keyPointColorPicker.value = initialColors.keyPoint;
+            textColorPicker.value = initialColors.text;
+
+            // Create the table
+            populateTable();
+
+            // Create the chart
+            const { labels, values, pointRadii, pointColors } = processData(chartData, initialColors);
+            createChart(labels, values, pointRadii, pointColors, initialColors);
+
+            // Add event listeners
+            updateChartBtn.addEventListener('click', updateChartFromTable);
+            lineColorPicker.addEventListener('input', updateChartColors);
+            keyPointColorPicker.addEventListener('input', updateChartColors);
+            textColorPicker.addEventListener('input', updateChartColors);
+        };
+    </script>
+</body>
+</html>

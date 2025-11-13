@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparative Advantage Index Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            color: #333;
+        }
+
+        .chart-header {
+            width: 90%;
+            max-width: 900px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .chart-header h1 {
+            font-size: 1.8em;
+            color: #071C2C; /* Default Title Color */
+            margin-bottom: 5px;
+        }
+
+        /* Control Panel */
+        .controls {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #58595B; /* Default Label Color */
+            font-size: 13px;
+        }
+
+        input[type="color"] {
+            border: none;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            border-radius: 4px;
+        }
+
+        /* Chart Card */
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 900px;
+            height: 450px; /* Adjust height for better column display */
+            margin-bottom: 30px;
+            display: flex; /* Flexbox to center canvas */
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Table Styling */
+        .table-container {
+            width: 90%;
+            max-width: 900px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left; /* Aligned left for better readability in table */
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #071C2C;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        input[type="number"] {
+            width: 70px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            border-color: #8B7053;
+            outline: none;
+            background-color: #fffdf5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chart-header">
+    <h1>Comparative Advantage Index</h1>
+</div>
+
+<div class="controls">
+    <div class="control-group">
+        <label for="highlightBarColor">Vietnam Bar Color:</label>
+        <input type="color" id="highlightBarColor" value="#8B7053"> 
+    </div>
+    <div class="control-group">
+        <label for="otherBarsColor">Other Bars Color:</label>
+        <input type="color" id="otherBarsColor" value="#071C2C"> 
+    </div>
+    <div class="control-group">
+        <label for="textColor">Text & Grids:</label>
+        <input type="color" id="textColor" value="#58595B"> 
+    </div>
+    <div class="control-group">
+        <label for="titleColor">Chart Title:</label>
+        <input type="color" id="titleColor" value="#071C2C"> 
+    </div>
+</div>
+
+<div class="chart-card">
+    <canvas id="advantageIndexChart"></canvas>
+</div>
+
+<div class="table-container">
+    <h3>Edit Data Below to Update Chart</h3>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Country</th>
+                <th>Index Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<script>
+    const ctx = document.getElementById('advantageIndexChart').getContext('2d');
+
+    // --- Initial Data ---
+    const initialData = [
+        { country: 'Myanmar', value: 49 },
+        { country: 'Lao', value: 51 },
+        { country: 'Cambodia', value: 53 },
+        { country: 'Philippines', value: 63 },
+        { country: 'Indonesia', value: 69 },
+        { country: 'Vietnam', value: 69 }, // Highlight this one
+        { country: 'India', value: 70 },
+        { country: 'China', value: 78 },
+        { country: 'Thailand', value: 79 },
+        { country: 'Taiwan', value: 80 },
+        { country: 'Malaysia', value: 80 },
+        { country: 'South Korea', value: 80 },
+        { country: 'Hongkong', value: 81 },
+        { country: 'Singapore', value: 82 }
+    ];
+
+    let labels = initialData.map(d => d.country);
+    let dataValues = initialData.map(d => d.value);
+
+    // --- Color Management ---
+    const highlightTarget = 'Vietnam';
+    let currentHighlightBarColor = document.getElementById('highlightBarColor').value;
+    let currentOtherBarsColor = document.getElementById('otherBarsColor').value;
+    let currentTextColor = document.getElementById('textColor').value;
+    let currentTitleColor = document.getElementById('titleColor').value;
+
+    function getBarColors() {
+        return labels.map(country => 
+            country === highlightTarget ? currentHighlightBarColor : currentOtherBarsColor
+        );
+    }
+
+    // --- Chart Configuration ---
+    const advantageIndexChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Comparative Advantage Index',
+                data: dataValues,
+                backgroundColor: getBarColors(),
+                borderRadius: 4,
+                barPercentage: 0.8,
+                categoryPercentage: 0.9 // Make bars slightly wider to match image
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `${ctx.label}: ${ctx.raw}`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 90, // Set max based on image
+                    grid: { color: '#e0e0e0' },
+                    ticks: { 
+                        color: currentTextColor,
+                        font: { size: 12 }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { 
+                        color: currentTextColor,
+                        font: { size: 12 },
+                        maxRotation: 45, // Rotate labels to prevent overlap
+                        minRotation: 45,
+                        autoSkip: false // Don't skip labels
+                    }
+                }
+            }
+        }
+    });
+
+    // --- Generate Table Logic ---
+    const tableBody = document.querySelector('#dataTable tbody');
+
+    function renderTable() {
+        tableBody.innerHTML = ''; 
+        
+        advantageIndexChart.data.labels.forEach((label, index) => {
+            const val = advantageIndexChart.data.datasets[0].data[index];
+            
+            const tr = document.createElement('tr');
+            
+            const tdLabel = document.createElement('td');
+            tdLabel.textContent = label;
+            tr.appendChild(tdLabel);
+            
+            const tdVal = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = '1'; // Assuming whole numbers for index
+            input.value = val;
+            
+            input.addEventListener('input', (e) => {
+                const newValue = parseFloat(e.target.value);
+                updateChartData(index, newValue);
+            });
+            
+            tdVal.appendChild(input);
+            tr.appendChild(tdVal);
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // --- Update Chart Data from Table ---
+    function updateChartData(index, newValue) {
+        advantageIndexChart.data.datasets[0].data[index] = newValue;
+        advantageIndexChart.update(); 
+    }
+
+    // --- Update Chart Colors from Controls ---
+    function updateChartColors() {
+        currentHighlightBarColor = document.getElementById('highlightBarColor').value;
+        currentOtherBarsColor = document.getElementById('otherBarsColor').value;
+        currentTextColor = document.getElementById('textColor').value;
+        currentTitleColor = document.getElementById('titleColor').value;
+
+        // Update Bar Colors
+        advantageIndexChart.data.datasets[0].backgroundColor = getBarColors();
+        
+        // Update Text Elements
+        document.querySelector('.chart-header h1').style.color = currentTitleColor;
+        advantageIndexChart.options.scales.y.ticks.color = currentTextColor;
+        advantageIndexChart.options.scales.x.ticks.color = currentTextColor;
+        
+        advantageIndexChart.update();
+    }
+
+    // --- Add Event Listeners ---
+    document.getElementById('highlightBarColor').addEventListener('input', updateChartColors);
+    document.getElementById('otherBarsColor').addEventListener('input', updateChartColors);
+    document.getElementById('textColor').addEventListener('input', updateChartColors);
+    document.getElementById('titleColor').addEventListener('input', updateChartColors);
+
+    // Initial Render
+    renderTable();
+</script>
+
+</body>
+</html>

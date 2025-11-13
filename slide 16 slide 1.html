@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        /* Control Panel Styling */
+        .controls {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        input[type="color"] {
+            border: none;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            background: none;
+        }
+
+        /* Chart Card Styling */
+        .chart-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 900px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <div class="control-group">
+        <label for="barColor">Revenue (Bars):</label>
+        <input type="color" id="barColor" value="#071C2C">
+    </div>
+    <div class="control-group">
+        <label for="lineColor">Growth (Line):</label>
+        <input type="color" id="lineColor" value="#8B7053">
+    </div>
+    <div class="control-group">
+        <label for="textColor">Text & Grids:</label>
+        <input type="color" id="textColor" value="#58595B">
+    </div>
+</div>
+
+<div class="chart-card">
+    <h2>Revenue & Growth Dashboard</h2>
+    <canvas id="myMixedChart"></canvas>
+</div>
+
+<script>
+    const ctx = document.getElementById('myMixedChart').getContext('2d');
+
+    // --- Initial Data ---
+    const years = ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024'];
+    const revenue = [3550, 3950, 4400, 4950, 5050, 4780, 5700, 6250, 6500];
+    const growth = [10.2, 10.5, 11.5, 12.0, 2.5, -4.0, 20.0, 9.5, 9.0];
+
+    // --- Initial Colors ---
+    let currentBarColor = document.getElementById('barColor').value;
+    let currentLineColor = document.getElementById('lineColor').value;
+    let currentTextColor = document.getElementById('textColor').value;
+
+    // Create Chart Instance
+    const myMixedChart = new Chart(ctx, {
+        data: {
+            labels: years,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Doanh thu (Nghìn tỷ VND)',
+                    data: revenue,
+                    backgroundColor: currentBarColor,
+                    borderColor: currentBarColor,
+                    borderWidth: 1,
+                    order: 2,
+                    yAxisID: 'y',
+                    barPercentage: 0.6
+                },
+                {
+                    type: 'line',
+                    label: 'Tăng trưởng (%)',
+                    data: growth,
+                    borderColor: currentLineColor,
+                    backgroundColor: currentLineColor,
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: currentLineColor,
+                    pointBorderWidth: 2,
+                    tension: 0.3,
+                    order: 1,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: currentTextColor }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: currentTextColor },
+                    grid: { display: false }
+                },
+                y: {
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Doanh thu (Nghìn tỷ VND)',
+                        color: currentTextColor,
+                        font: { weight: 'bold' }
+                    },
+                    ticks: { color: currentTextColor },
+                    grid: { color: '#e0e0e0' }
+                },
+                y1: {
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Tăng trưởng (%)',
+                        color: currentLineColor, // Axis title matches line color
+                        font: { weight: 'bold' }
+                    },
+                    ticks: {
+                        color: currentLineColor,
+                        callback: val => val + '%'
+                    },
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+
+    // --- Function to Update Colors ---
+    function updateChartColors() {
+        // 1. Get new values from inputs
+        const newBarColor = document.getElementById('barColor').value;
+        const newLineColor = document.getElementById('lineColor').value;
+        const newTextColor = document.getElementById('textColor').value;
+
+        // 2. Update Datasets
+        // Bar Dataset
+        myMixedChart.data.datasets[0].backgroundColor = newBarColor;
+        myMixedChart.data.datasets[0].borderColor = newBarColor;
+        
+        // Line Dataset
+        myMixedChart.data.datasets[1].borderColor = newLineColor;
+        myMixedChart.data.datasets[1].backgroundColor = newLineColor;
+        myMixedChart.data.datasets[1].pointBorderColor = newLineColor;
+
+        // 3. Update Options (Scales and Labels)
+        // X Axis
+        myMixedChart.options.scales.x.ticks.color = newTextColor;
+        
+        // Y Axis (Left - Revenue)
+        myMixedChart.options.scales.y.title.color = newTextColor;
+        myMixedChart.options.scales.y.ticks.color = newTextColor;
+        
+        // Y1 Axis (Right - Growth) - keep synced with line color for readability
+        myMixedChart.options.scales.y1.title.color = newLineColor;
+        myMixedChart.options.scales.y1.ticks.color = newLineColor;
+
+        // Legend
+        myMixedChart.options.plugins.legend.labels.color = newTextColor;
+
+        // 4. Redraw the chart
+        myMixedChart.update();
+    }
+
+    // --- Add Event Listeners ---
+    // Triggers update immediately when color is picked
+    document.getElementById('barColor').addEventListener('input', updateChartColors);
+    document.getElementById('lineColor').addEventListener('input', updateChartColors);
+    document.getElementById('textColor').addEventListener('input', updateChartColors);
+
+</script>
+
+</body>
+</html>

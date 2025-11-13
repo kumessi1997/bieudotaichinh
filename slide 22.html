@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPI and Deposit Rate Interactive Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #071C2C; /* Using one of the dark colors for headings */
+            border-bottom: 2px solid #8B7053;
+            padding-bottom: 5px;
+        }
+        #chart-container {
+            width: 100%;
+            max-height: 500px;
+            margin-bottom: 40px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .color-control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .color-control-group label {
+            font-weight: bold;
+        }
+        /* Data Table Styling */
+        #data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            table-layout: fixed;
+        }
+        #data-table th, #data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        #data-table th {
+            background-color: #071C2C;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        #data-table tbody tr:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+        #data-table td[contenteditable="true"] {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #data-table td[contenteditable="true"]:hover {
+            background-color: #ffecc6; /* Light highlight on hover */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Economic Indicators Chart</h1>
+        
+        <div class="controls">
+            <h2>Chart Controls</h2>
+            <div class="color-control-group">
+                <label for="cpiColor">CPI Color:</label>
+                <input type="color" id="cpiColor" value="#8B7053">
+            </div>
+            <div class="color-control-group">
+                <label for="depositColor">Deposit Rate Color:</label>
+                <input type="color" id="depositColor" value="#071C2C">
+            </div>
+        </div>
+
+        <div id="chart-container">
+            <canvas id="lineChart"></canvas>
+        </div>
+
+        <h2>Data Modification Table</h2>
+        <div style="overflow-x: auto;">
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>CPI (average, %)</th>
+                        <th>Deposit rate (12M term, %)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Data extracted from the image
+        const chartData = {
+            labels: [
+                '2019-3M', '2019-6M', '2019-9M', '2019-12M',
+                '2020-3M', '2020-6M', '2020-9M', '2020-12M',
+                '2021-3M', '2021-6M', '2021-9M', '2021-12M',
+                '2022-3M', '2022-6M', '2022-9M', '2022-12M',
+                '2023-3M', '2023-6M', '2023-9M', '2023-12M',
+                '2024-3M', '2024-6M', '2024-9M', '2024-12M'
+            ],
+            cpi: [
+                0.00, 2.70, 2.50, 2.80,
+                5.50, 4.50, 3.40, 0.40,
+                1.20, 1.80, 1.90, 1.90,
+                2.30, 2.70, 3.00, 4.20,
+                3.20, 3.00, 3.90, 3.63,
+                4.10, 3.50, 3.90, 3.70
+            ],
+            depositRate: [
+                5.5, 5.8, 5.8, 5.8,
+                6.0, 5.8, 5.6, 5.6,
+                4.7, 4.6, 4.6, 4.5,
+                4.6, 4.7, 4.8, 5.0,
+                7.3, 7.6, 7.0, 5.9,
+                5.1, 5.4, 5.3, 5.2
+            ]
+        };
+
+        let myChart; // Variable to hold the Chart.js instance
+
+        // Function to create and update the chart
+        function drawChart() {
+            const ctx = document.getElementById('lineChart').getContext('2d');
+            
+            // Define colors from controls or default to initial values
+            const cpiColor = document.getElementById('cpiColor')?.value || '#8B7053';
+            const depositColor = document.getElementById('depositColor')?.value || '#071C2C';
+            const gridAndTextColor = '#58595B'; // Fixed dark grey from pattern
+
+            const chartConfig = {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'CPI (average)',
+                            data: chartData.cpi,
+                            borderColor: cpiColor,
+                            backgroundColor: cpiColor,
+                            tension: 0.1,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Deposit rate (12M term)',
+                            data: chartData.depositRate,
+                            borderColor: depositColor,
+                            backgroundColor: depositColor,
+                            tension: 0.1,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Period',
+                                color: gridAndTextColor
+                            },
+                            ticks: {
+                                color: gridAndTextColor
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Rate (%)',
+                                color: gridAndTextColor
+                            },
+                            min: -1,
+                            max: 10, // Adjusted max based on the original image's scale
+                            ticks: {
+                                color: gridAndTextColor,
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: gridAndTextColor
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (myChart) {
+                // Update existing chart (used for color changes and data changes)
+                myChart.data.datasets[0].borderColor = cpiColor;
+                myChart.data.datasets[0].backgroundColor = cpiColor;
+                myChart.data.datasets[0].data = chartData.cpi;
+
+                myChart.data.datasets[1].borderColor = depositColor;
+                myChart.data.datasets[1].backgroundColor = depositColor;
+                myChart.data.datasets[1].data = chartData.depositRate;
+
+                myChart.update();
+            } else {
+                // Initialize the chart
+                myChart = new Chart(ctx, chartConfig);
+            }
+        }
+
+        // Function to populate and setup the data table
+        function setupDataTable() {
+            const tbody = document.querySelector('#data-table tbody');
+            tbody.innerHTML = ''; // Clear existing rows
+
+            chartData.labels.forEach((label, index) => {
+                const row = tbody.insertRow();
+                row.insertCell().textContent = label; // Period
+                
+                // CPI Cell
+                const cpiCell = row.insertCell();
+                cpiCell.textContent = chartData.cpi[index];
+                cpiCell.contentEditable = 'true';
+                cpiCell.dataset.datasetIndex = 0; // Custom data attribute for easy identification
+                cpiCell.dataset.pointIndex = index;
+                
+                // Deposit Rate Cell
+                const depositCell = row.insertCell();
+                depositCell.textContent = chartData.depositRate[index];
+                depositCell.contentEditable = 'true';
+                depositCell.dataset.datasetIndex = 1; 
+                depositCell.dataset.pointIndex = index;
+            });
+
+            // Add event listener to the table for data changes
+            tbody.addEventListener('input', function(event) {
+                const cell = event.target;
+                if (cell.contentEditable === 'true') {
+                    const datasetIndex = parseInt(cell.dataset.datasetIndex);
+                    const pointIndex = parseInt(cell.dataset.pointIndex);
+                    
+                    // Attempt to parse the new value as a float
+                    const newValue = parseFloat(cell.textContent.trim());
+                    
+                    if (!isNaN(newValue)) {
+                        // Update the internal data array
+                        if (datasetIndex === 0) {
+                            chartData.cpi[pointIndex] = newValue;
+                        } else if (datasetIndex === 1) {
+                            chartData.depositRate[pointIndex] = newValue;
+                        }
+                        // Re-draw the chart
+                        drawChart();
+                    } else {
+                        // Optional: Revert to old value if input is invalid
+                        alert("Invalid input. Please enter a number.");
+                        // Revert the cell content to the current value in the data array
+                        cell.textContent = datasetIndex === 0 ? chartData.cpi[pointIndex] : chartData.depositRate[pointIndex];
+                    }
+                }
+            });
+        }
+
+        // Function to setup color change listeners
+        function setupColorControls() {
+            document.getElementById('cpiColor').addEventListener('input', drawChart);
+            document.getElementById('depositColor').addEventListener('input', drawChart);
+        }
+
+        // Initialize everything on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDataTable();
+            drawChart();
+            setupColorControls();
+        });
+
+    </script>
+</body>
+</html>

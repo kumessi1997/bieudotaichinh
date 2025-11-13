@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Economies Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.0.0/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            color: #333;
+        }
+
+        .chart-header {
+            width: 90%;
+            max-width: 1000px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .chart-header h1 {
+            font-size: 1.8em;
+            color: #071C2C; /* Default Title Color */
+            margin-bottom: 5px;
+        }
+
+        /* Control Panel */
+        .controls {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #58595B; /* Default Label Color */
+            font-size: 13px;
+        }
+
+        input[type="color"] {
+            border: none;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            border-radius: 4px;
+        }
+
+        /* Chart Card */
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 1000px;
+            height: 550px; /* Taller for better Y-axis display */
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Table Styling */
+        .table-container {
+            width: 90%;
+            max-width: 1000px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #071C2C;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            border-color: #8B7053;
+            outline: none;
+            background-color: #fffdf5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chart-header">
+    <h1># Global Economies</h1>
+</div>
+
+<div class="controls">
+    <div class="control-group">
+        <label for="lineColor">Line Color:</label>
+        <input type="color" id="lineColor" value="#077A6C"> 
+    </div>
+    <div class="control-group">
+        <label for="pointColor">Point Color:</label>
+        <input type="color" id="pointColor" value="#077A6C"> 
+    </div>
+    <div class="control-group">
+        <label for="dataLabelColor">Data Label Color:</label>
+        <input type="color" id="dataLabelColor" value="#FF0000"> 
+    </div>
+    <div class="control-group">
+        <label for="textColor">Text & Grids:</label>
+        <input type="color" id="textColor" value="#58595B"> 
+    </div>
+    <div class="control-group">
+        <label for="titleColor">Chart Title:</label>
+        <input type="color" id="titleColor" value="#071C2C"> 
+    </div>
+</div>
+
+<div class="chart-card">
+    <canvas id="globalEconomiesChart"></canvas>
+</div>
+
+<div class="table-container">
+    <h3>Edit Data Below to Update Chart</h3>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Year</th>
+                <th># Global Economies</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<script>
+    Chart.register(ChartDataLabels);
+
+    const ctx = document.getElementById('globalEconomiesChart').getContext('2d');
+
+    // --- Data from your image ---
+    const initialData = [
+        { year: '2010', value: 85, label: true },
+        { year: '2011', value: 61, label: false },
+        { year: '2012', value: 51, label: false },
+        { year: '2013', value: 49, label: false },
+        { year: '2014', value: 46, label: false },
+        { year: '2015', value: 43, label: false },
+        { year: '2016', value: 43, label: false },
+        { year: '2017', value: 42, label: false },
+        { year: '2018', value: 42, label: false },
+        { year: '2019', value: 39, label: false },
+        { year: '2020', value: 36, label: false },
+        { year: '2021', value: 40, label: false },
+        { year: '2022', value: 36, label: true }, // Special label
+        { year: '2050', value: 19, label: true }  // Special label and dotted line starts before this
+    ];
+
+    let labels = initialData.map(d => d.year);
+    let dataValues = initialData.map(d => d.value);
+    let dataLabelsVisibility = initialData.map(d => d.label); // Array to control datalabel display
+
+    // --- Color Management ---
+    let currentLineColor = document.getElementById('lineColor').value;
+    let currentPointColor = document.getElementById('pointColor').value;
+    let currentDataLabelColor = document.getElementById('dataLabelColor').value;
+    let currentTextColor = document.getElementById('textColor').value;
+    let currentTitleColor = document.getElementById('titleColor').value;
+
+    // --- Chart Configuration ---
+    const globalEconomiesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '# Global Economies',
+                data: dataValues,
+                borderColor: currentLineColor,
+                backgroundColor: currentPointColor, // For point fill
+                borderWidth: 2,
+                pointRadius: 5,
+                pointBackgroundColor: currentPointColor,
+                pointBorderColor: currentPointColor,
+                pointHoverRadius: 7,
+                tension: 0, // Straight lines between points
+
+                // Dotted line for forecast (from 2022 to 2050)
+                segment: {
+                    borderColor: (ctx) => {
+                        if (ctx.p1DataIndex >= labels.indexOf('2022')) { // Start dotted from 2022
+                            return currentLineColor; // Keep line color
+                        }
+                        return undefined;
+                    },
+                    borderDash: (ctx) => {
+                        if (ctx.p1DataIndex >= labels.indexOf('2022')) {
+                            return [5, 5]; // Dotted pattern
+                        }
+                        return undefined;
+                    },
+                },
+
+                datalabels: {
+                    anchor: 'center',
+                    align: 'top',
+                    offset: 8, // Offset from the point
+                    color: currentDataLabelColor,
+                    font: { size: 16, weight: 'bold' }, // Large, bold labels
+                    formatter: function(value, context) {
+                        return dataLabelsVisibility[context.dataIndex] ? value : ''; // Only show for specific points
+                    }
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }, // No legend needed
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    reverse: true, // INVERTED Y-AXIS!
+                    min: 0,
+                    max: 100, // Max value based on image
+                    grid: { color: '#e0e0e0' },
+                    ticks: {
+                        color: currentTextColor,
+                        font: { size: 12 },
+                        stepSize: 10 // Labels every 10 units
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { 
+                        color: currentTextColor,
+                        font: { size: 12 }
+                    }
+                }
+            }
+        }
+    });
+
+    // --- Generate Table Logic ---
+    const tableBody = document.querySelector('#dataTable tbody');
+
+    function renderTable() {
+        tableBody.innerHTML = ''; 
+        
+        globalEconomiesChart.data.labels.forEach((label, index) => {
+            const val = globalEconomiesChart.data.datasets[0].data[index];
+            
+            const tr = document.createElement('tr');
+            
+            // Year Cell
+            const tdLabel = document.createElement('td');
+            tdLabel.textContent = label;
+            tr.appendChild(tdLabel);
+            
+            // Input Cell for Value
+            const tdVal = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = '1'; // Assuming whole numbers
+            input.value = val;
+            
+            input.addEventListener('input', (e) => {
+                const newValue = parseFloat(e.target.value);
+                updateChartData(index, newValue);
+            });
+            
+            tdVal.appendChild(input);
+            tr.appendChild(tdVal);
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // --- Update Chart Data from Table ---
+    function updateChartData(index, newValue) {
+        globalEconomiesChart.data.datasets[0].data[index] = newValue;
+        globalEconomiesChart.update(); 
+    }
+
+    // --- Update Chart Colors from Controls ---
+    function updateChartColors() {
+        currentLineColor = document.getElementById('lineColor').value;
+        currentPointColor = document.getElementById('pointColor').value;
+        currentDataLabelColor = document.getElementById('dataLabelColor').value;
+        currentTextColor = document.getElementById('textColor').value;
+        currentTitleColor = document.getElementById('titleColor').value;
+
+        // Update Dataset Colors
+        globalEconomiesChart.data.datasets[0].borderColor = currentLineColor;
+        globalEconomiesChart.data.datasets[0].backgroundColor = currentPointColor;
+        globalEconomiesChart.data.datasets[0].pointBackgroundColor = currentPointColor;
+        globalEconomiesChart.data.datasets[0].pointBorderColor = currentPointColor;
+        globalEconomiesChart.data.datasets[0].datalabels.color = currentDataLabelColor;
+        
+        // Update Options Colors
+        document.querySelector('.chart-header h1').style.color = currentTitleColor;
+        globalEconomiesChart.options.scales.y.ticks.color = currentTextColor;
+        globalEconomiesChart.options.scales.x.ticks.color = currentTextColor;
+        globalEconomiesChart.options.scales.y.grid.color = currentTextColor + '33'; // Semi-transparent grid
+
+        globalEconomiesChart.update();
+    }
+
+    // --- Add Event Listeners ---
+    document.getElementById('lineColor').addEventListener('input', updateChartColors);
+    document.getElementById('pointColor').addEventListener('input', updateChartColors);
+    document.getElementById('dataLabelColor').addEventListener('input', updateChartColors);
+    document.getElementById('textColor').addEventListener('input', updateChartColors);
+    document.getElementById('titleColor').addEventListener('input', updateChartColors);
+
+    // Initial Render
+    renderTable();
+</script>
+
+</body>
+</html>

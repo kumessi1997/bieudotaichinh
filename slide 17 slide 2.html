@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FDI Chart with Controls</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.0.0/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            color: #333;
+        }
+
+        .chart-header {
+            width: 90%;
+            max-width: 900px;
+            margin-bottom: 20px;
+        }
+        .chart-header h1 {
+            font-size: 1.6em;
+            color: #071C2C; /* Dark blue from your palette */
+            margin-bottom: 5px;
+        }
+        .chart-header .underline {
+            height: 3px;
+            background-color: #8B7053; /* Brown from your palette */
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        /* Control Panel Styling */
+        .controls {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #58595B; /* Grey from your palette */
+            font-size: 14px;
+        }
+
+        input[type="color"] {
+            border: none;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            outline: none;
+            -webkit-appearance: none; /* For Chrome/Safari */
+            appearance: none;
+            border-radius: 5px; /* Slightly rounded for aesthetics */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 3px;
+        }
+
+
+        /* Chart Card Styling */
+        .chart-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 900px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chart-header">
+    <h1>Implemented FDI reached US$25.35 bn, the highest level ever</h1>
+    <div class="underline"></div>
+</div>
+
+<div class="controls">
+    <div class="control-group">
+        <label for="registeredFDIColor">Registered FDI (Bars):</label>
+        <input type="color" id="registeredFDIColor" value="#58595B">
+    </div>
+    <div class="control-group">
+        <label for="implementedFDIColor">Implemented FDI (Bars):</label>
+        <input type="color" id="implementedFDIColor" value="#95BCA6"> </div>
+    <div class="control-group">
+        <label for="growthLineColor">Growth (Line/Triangles):</label>
+        <input type="color" id="growthLineColor" value="#8B7053">
+    </div>
+    <div class="control-group">
+        <label for="titleColor">Title & Overall Text:</label>
+        <input type="color" id="titleColor" value="#071C2C">
+    </div>
+    <div class="control-group">
+        <label for="axisTextColor">Axis Labels:</label>
+        <input type="color" id="axisTextColor" value="#58595B">
+    </div>
+</div>
+
+<div class="chart-card">
+    <canvas id="fdiChart"></canvas>
+</div>
+
+<script>
+    // Register the datalabels plugin globally
+    Chart.register(ChartDataLabels);
+
+    const ctx = document.getElementById('fdiChart').getContext('2d');
+
+    // --- Data from your image ---
+    const years = ['2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024'];
+    const registeredFDI = [23, 24, 36, 35, 38, 29, 31, 28, 39, 38]; // Grey bars
+    const implementedFDI = [15, 16, 18, 19, 20, 20, 20, 22, 23, 25]; // Green bars
+    const registeredGrowth = [null, 20, 45, 20, 10, -15, 20, -10, 30, -5]; // Triangle data (approximate)
+
+    // --- Initial Colors (using your palette and some derived for contrast) ---
+    // Note: I'm using a shade of green for implemented FDI to match the original image's distinction,
+    // as your palette only provided three main colors. You can adjust it with the control.
+    let currentRegisteredFDIColor = document.getElementById('registeredFDIColor').value; // Grey for Registered
+    let currentImplementedFDIColor = '#95BCA6'; // Default green-ish for Implemented (can be changed)
+    let currentGrowthLineColor = document.getElementById('growthLineColor').value;     // Brown for Growth
+    let currentTitleColor = document.getElementById('titleColor').value;              // Dark Blue for Title/Headline
+    let currentAxisTextColor = document.getElementById('axisTextColor').value;          // Grey for Axis Text
+
+    const fdiChart = new Chart(ctx, {
+        data: {
+            labels: years,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Registered FDI',
+                    data: registeredFDI,
+                    backgroundColor: currentRegisteredFDIColor,
+                    borderColor: currentRegisteredFDIColor,
+                    yAxisID: 'y',
+                    order: 3, // Render order: bottom bar
+                    barPercentage: 0.7, // Adjust bar width
+                    categoryPercentage: 0.8,
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 4,
+                        color: currentRegisteredFDIColor,
+                        formatter: function(value) {
+                            return value; // Display the raw value
+                        },
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                {
+                    type: 'bar',
+                    label: 'Implemented FDI',
+                    data: implementedFDI,
+                    backgroundColor: currentImplementedFDIColor,
+                    borderColor: currentImplementedFDIColor,
+                    yAxisID: 'y',
+                    order: 2, // Render order: middle bar
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.8,
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 4,
+                        color: currentImplementedFDIColor,
+                        formatter: function(value) {
+                            return value; // Display the raw value
+                        },
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                {
+                    type: 'line',
+                    label: 'Registered FDI growth y-o-y',
+                    data: registeredGrowth,
+                    borderColor: currentGrowthLineColor,
+                    backgroundColor: currentGrowthLineColor, // For point fill
+                    borderWidth: 0, // No line connecting points
+                    pointRadius: 8,
+                    pointHoverRadius: 10,
+                    pointStyle: 'triangle', // Triangle point style
+                    yAxisID: 'y1',
+                    order: 1, // Render order: top (on bars)
+                    datalabels: {
+                        anchor: 'end', // Position label at the end of the point
+                        align: 'end',   // Align to the end of the point
+                        offset: function(context) { // Adjust offset based on positive/negative growth
+                            return context.dataset.data[context.dataIndex] < 0 ? -12 : 12; // Adjust for negative values
+                        },
+                        color: currentGrowthLineColor,
+                        formatter: function(value) {
+                            return value !== null ? value + '%' : ''; // Add % sign if value exists
+                        },
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // Allows flexible height
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: currentAxisTextColor,
+                        font: { size: 13 },
+                        boxWidth: 20,
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: '#333',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    padding: 10,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.datasetIndex < 2) { // FDI bars
+                                label += '$' + context.raw + ' bn';
+                            } else { // Growth line
+                                label += context.raw + '%';
+                            }
+                            return label;
+                        }
+                    }
+                },
+                datalabels: {
+                    display: function(context) {
+                        return context.dataset.datalabels.display !== false; // Enable/disable per dataset
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: currentAxisTextColor,
+                        font: { size: 13 }
+                    },
+                    grid: { display: false }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'US$ billion',
+                        color: currentAxisTextColor,
+                        font: { weight: 'bold', size: 14 }
+                    },
+                    ticks: {
+                        color: currentAxisTextColor,
+                        font: { size: 13 },
+                        callback: function(value) { return value; } // No '$' here to match image
+                    },
+                    grid: { color: '#e0e0e0' },
+                    min: 0,
+                    max: 50 // To match image scale
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Percentage (%)', // Added for clarity
+                        color: currentAxisTextColor, // Using general text color for right axis title
+                        font: { weight: 'bold', size: 14 }
+                    },
+                    ticks: {
+                        color: currentAxisTextColor,
+                        font: { size: 13 },
+                        callback: function(value) { return value + '%'; },
+                        stepSize: 20 // Major ticks every 20%
+                    },
+                    grid: {
+                        drawOnChartArea: false // Hide grid for right axis
+                    },
+                    min: -40, // To match image scale
+                    max: 60  // To match image scale
+                }
+            }
+        }
+    });
+
+    // --- Function to Update Colors ---
+    function updateChartColors() {
+        const newRegisteredFDIColor = document.getElementById('registeredFDIColor').value;
+        const newImplementedFDIColor = document.getElementById('implementedFDIColor').value;
+        const newGrowthLineColor = document.getElementById('growthLineColor').value;
+        const newTitleColor = document.getElementById('titleColor').value;
+        const newAxisTextColor = document.getElementById('axisTextColor').value;
+
+        // Update Dataset Colors
+        fdiChart.data.datasets[0].backgroundColor = newRegisteredFDIColor;
+        fdiChart.data.datasets[0].borderColor = newRegisteredFDIColor;
+        fdiChart.data.datasets[0].datalabels.color = newRegisteredFDIColor; // Datalabel color
+        
+        fdiChart.data.datasets[1].backgroundColor = newImplementedFDIColor;
+        fdiChart.data.datasets[1].borderColor = newImplementedFDIColor;
+        fdiChart.data.datasets[1].datalabels.color = newImplementedFDIColor; // Datalabel color
+
+        fdiChart.data.datasets[2].borderColor = newGrowthLineColor;
+        fdiChart.data.datasets[2].backgroundColor = newGrowthLineColor;
+        fdiChart.data.datasets[2].datalabels.color = newGrowthLineColor; // Datalabel color
+
+        // Update Options Colors
+        // Header (external to chart, update manually)
+        document.querySelector('.chart-header h1').style.color = newTitleColor;
+        document.querySelector('.chart-header .underline').style.backgroundColor = newGrowthLineColor;
+
+        // Legend
+        fdiChart.options.plugins.legend.labels.color = newAxisTextColor;
+
+        // X-axis
+        fdiChart.options.scales.x.ticks.color = newAxisTextColor;
+
+        // Left Y-axis (Registered/Implemented FDI)
+        fdiChart.options.scales.y.title.color = newAxisTextColor;
+        fdiChart.options.scales.y.ticks.color = newAxisTextColor;
+
+        // Right Y-axis (Growth)
+        fdiChart.options.scales.y1.title.color = newAxisTextColor; // Changed to match overall axis text
+        fdiChart.options.scales.y1.ticks.color = newGrowthLineColor; // Ticks still match line for easy reading
+
+        fdiChart.update();
+    }
+
+    // --- Add Event Listeners ---
+    document.getElementById('registeredFDIColor').addEventListener('input', updateChartColors);
+    document.getElementById('implementedFDIColor').addEventListener('input', updateChartColors);
+    document.getElementById('growthLineColor').addEventListener('input', updateChartColors);
+    document.getElementById('titleColor').addEventListener('input', updateChartColors);
+    document.getElementById('axisTextColor').addEventListener('input', updateChartColors);
+
+</script>
+
+</body>
+</html>

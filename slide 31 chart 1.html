@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1Y FW PE Ratio Interactive Chart</title>
+    <!-- Chart.js CDN for chart rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #071C2C; /* Deep Navy */
+            border-bottom: 2px solid #8B7053; /* Warm Brown underline */
+            padding-bottom: 5px;
+        }
+        #chart-container {
+            width: 100%;
+            max-height: 500px;
+            margin-bottom: 40px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .color-control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .color-control-group label {
+            font-weight: bold;
+        }
+        /* Data Table Styling */
+        #data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            table-layout: fixed;
+        }
+        #data-table th, #data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        #data-table th {
+            background-color: #071C2C;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        #data-table tbody tr:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+        #data-table td[contenteditable="true"] {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #data-table td[contenteditable="true"]:hover {
+            background-color: #ffecc6; /* Light highlight on hover */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>1Y FW PE Ratio Interactive Chart</h1>
+        
+        <div class="controls">
+            <h2>Chart Controls</h2>
+            <div class="color-control-group">
+                <label for="peColor">1Y FW PE Line Color:</label>
+                <input type="color" id="peColor" value="#8B7053">
+            </div>
+            <p style="color: #58595B; font-style: italic; margin: 0;">Statistical lines (Average, SD) are fixed to Dark Gray (#58595B).</p>
+        </div>
+
+        <div id="chart-container">
+            <canvas id="lineChart"></canvas>
+        </div>
+
+        <h2>Modify 1Y FW PE Data</h2>
+        <div style="overflow-x: auto;">
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Period</th>
+                        <th style="width: 70%;">1Y FW PE Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data rows will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Data extracted from the image, organized by quarters (Q1=3M, Q2=6M, etc.)
+        const peDataPoints = [
+            { label: '2015-Q1', peValue: 13.0 }, { label: '2015-Q2', peValue: 14.5 }, { label: '2015-Q3', peValue: 13.0 }, { label: '2015-Q4', peValue: 14.0 },
+            { label: '2016-Q1', peValue: 13.5 }, { label: '2016-Q2', peValue: 15.0 }, { label: '2016-Q3', peValue: 15.5 }, { label: '2016-Q4', peValue: 16.0 },
+            { label: '2017-Q1', peValue: 15.5 }, { label: '2017-Q2', peValue: 14.5 }, { label: '2017-Q3', peValue: 15.0 }, { label: '2017-Q4', peValue: 15.5 },
+            { label: '2018-Q1', peValue: 17.5 }, { label: '2018-Q2', peValue: 21.0 }, { label: '2018-Q3', peValue: 16.5 }, { label: '2018-Q4', peValue: 15.0 },
+            { label: '2019-Q1', peValue: 16.5 }, { label: '2019-Q2', peValue: 15.0 }, { label: '2019-Q3', peValue: 15.5 }, { label: '2019-Q4', peValue: 15.8 },
+            { label: '2020-Q1', peValue: 15.5 }, { label: '2020-Q2', peValue: 14.5 }, { label: '2020-Q3', peValue: 10.0 }, { label: '2020-Q4', peValue: 15.0 },
+            { label: '2021-Q1', peValue: 17.0 }, { label: '2021-Q2', peValue: 18.0 }, { label: '2021-Q3', peValue: 13.5 }, { label: '2021-Q4', peValue: 15.0 },
+            { label: '2022-Q1', peValue: 15.5 }, { label: '2022-Q2', peValue: 14.5 }, { label: '2022-Q3', peValue: 12.0 }, { label: '2022-Q4', peValue: 11.5 },
+            { label: '2023-Q1', peValue: 9.5 }, { label: '2023-Q2', peValue: 10.5 }, { label: '2023-Q3', peValue: 11.0 }, { label: '2023-Q4', peValue: 12.0 },
+            { label: '2024-Q1', peValue: 11.5 }, { label: '2024-Q2', peValue: 12.0 }, { label: '2024-Q3', peValue: 10.5 }, { label: '2024-Q4', peValue: 11.0 },
+            { label: '2025-Q1', peValue: 10.5 }, { label: '2025-Q2', peValue: 12.0 }, { label: '2025-Q3', peValue: 14.0 }
+        ];
+
+        // Estimated statistical levels from the image
+        const statisticalLevels = {
+            '10Y Average': 14.0,
+            '+1 SD': 16.5,
+            '-1 SD': 11.5,
+            '+2 SD': 19.0,
+            '-2 SD': 9.0
+        };
+
+        let myChart; // Variable to hold the Chart.js instance
+
+        // Function to create and update the chart
+        function drawChart() {
+            const ctx = document.getElementById('lineChart').getContext('2d');
+            
+            // Define colors from controls or defaults
+            const peColor = document.getElementById('peColor')?.value || '#8B7053';
+            const statColor = '#58595B'; // Dark Gray for statistical lines and text/grid
+            
+            const labels = peDataPoints.map(p => p.label);
+            const peValues = peDataPoints.map(p => p.peValue);
+
+            // Create datasets for the statistical lines (constant values)
+            const statDatasets = [
+                {
+                    label: '10Y Average',
+                    data: labels.map(() => statisticalLevels['10Y Average']),
+                    borderColor: statColor,
+                    borderWidth: 3,
+                    borderDash: [],
+                    pointRadius: 0,
+                    tension: 0,
+                    fill: false,
+                },
+                {
+                    label: '+1 SD',
+                    data: labels.map(() => statisticalLevels['+1 SD']),
+                    borderColor: statColor,
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    tension: 0,
+                    fill: false,
+                },
+                {
+                    label: '-1 SD',
+                    data: labels.map(() => statisticalLevels['-1 SD']),
+                    borderColor: statColor,
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    tension: 0,
+                    fill: false,
+                },
+                {
+                    label: '+2 SD',
+                    data: labels.map(() => statisticalLevels['+2 SD']),
+                    borderColor: statColor,
+                    borderWidth: 1,
+                    borderDash: [2, 4],
+                    pointRadius: 0,
+                    tension: 0,
+                    fill: false,
+                },
+                {
+                    label: '-2 SD',
+                    data: labels.map(() => statisticalLevels['-2 SD']),
+                    borderColor: statColor,
+                    borderWidth: 1,
+                    borderDash: [2, 4],
+                    pointRadius: 0,
+                    tension: 0,
+                    fill: false,
+                }
+            ];
+
+            const peDataset = {
+                label: '1Y FW PE',
+                data: peValues,
+                borderColor: peColor,
+                backgroundColor: peColor,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                tension: 0.1,
+                fill: false,
+            };
+
+            const allDatasets = [peDataset, ...statDatasets];
+
+            const chartConfig = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: allDatasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            // Only show the Year labels to match the image
+                            ticks: {
+                                color: statColor,
+                                callback: function(val, index) {
+                                    // Extract year from label (e.g., '2015-Q1' -> '2015')
+                                    const year = this.getLabelForValue(val).substring(0, 4);
+                                    // Only show the year on the Q1 tick
+                                    return (index % 4 === 0) ? year : '';
+                                },
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: false
+                            },
+                            min: 5,
+                            max: 23,
+                            stepSize: 2,
+                            ticks: {
+                                color: statColor,
+                                stepSize: 2
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                drawBorder: true
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: statColor,
+                                boxWidth: 15,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => items[0].label.replace('-', ' '),
+                                label: (context) => `${context.dataset.label}: ${context.parsed.y}`
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (myChart) {
+                // Update existing chart (color or data change)
+                myChart.data.datasets[0].borderColor = peColor;
+                myChart.data.datasets[0].backgroundColor = peColor;
+                myChart.data.datasets[0].data = peValues;
+                myChart.update();
+            } else {
+                // Initialize the chart
+                myChart = new Chart(ctx, chartConfig);
+            }
+        }
+
+        // Function to populate and setup the data table
+        function setupDataTable() {
+            const tbody = document.querySelector('#data-table tbody');
+            tbody.innerHTML = ''; // Clear existing rows
+
+            peDataPoints.forEach((point, index) => {
+                const row = tbody.insertRow();
+                // Period Cell
+                row.insertCell().textContent = point.label.replace('-', ' ');
+                
+                // PE Value Cell
+                const peCell = row.insertCell();
+                peCell.textContent = point.peValue;
+                peCell.contentEditable = 'true';
+                peCell.dataset.pointIndex = index; // Custom data attribute for easy identification
+            });
+
+            // Add event listener to the table for data changes
+            tbody.addEventListener('input', function(event) {
+                const cell = event.target;
+                if (cell.contentEditable === 'true') {
+                    const pointIndex = parseInt(cell.dataset.pointIndex);
+                    
+                    // Attempt to parse the new value as a float
+                    const newValue = parseFloat(cell.textContent.trim());
+                    
+                    if (!isNaN(newValue)) {
+                        // Update the internal data array
+                        peDataPoints[pointIndex].peValue = newValue;
+                        
+                        // Re-draw the chart
+                        drawChart();
+                    } else {
+                        // Optional: Revert to old value if input is invalid
+                        // Find the old value
+                        const oldValue = peDataPoints[pointIndex].peValue;
+                        // Revert the cell content to the current value
+                        cell.textContent = oldValue;
+                        console.error("Invalid input. Please enter a number.");
+                    }
+                }
+            });
+        }
+
+        // Function to setup color change listener
+        function setupColorControls() {
+            document.getElementById('peColor').addEventListener('input', drawChart);
+        }
+
+        // Initialize everything on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDataTable();
+            drawChart();
+            setupColorControls();
+        });
+
+    </script>
+</body>
+</html>

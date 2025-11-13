@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML File Menu</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; /* cool-gray-300 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; /* cool-gray-400 */
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; /* cool-gray-100 */
+            border-radius: 10px;
+        }
+        /* Simple transition for links */
+        .menu-link {
+            transition: all 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+
+    <div class="flex h-screen">
+        <!-- Sidebar Menu -->
+        <aside class="w-64 bg-white shadow-md overflow-y-auto flex flex-col">
+            <header class="p-4 border-b">
+                <h1 class="text-xl font-bold text-gray-800">File Menu</h1>
+            </header>
+            
+            <nav class="flex-1 p-4 space-y-2">
+                <!-- Links will be populated here. Using JS to set the target. -->
+                <a href="slide 7.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 7.html</a>
+                <a href="slide 12 chart 1.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 12 chart 1.html</a>
+                <a href="slide 12 chart 2.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 12 chart 2.html</a>
+                <a href="slide 13.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 13.html</a>
+                <a href="slide 16 slide 1.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 16 slide 1.html</a>
+                <a href="slide 16 slide 2.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 16 slide 2.html</a>
+                <a href="slide 17 chart 3.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 17 chart 3.html</a>
+                <a href="slide 17 slide 2.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 17 slide 2.html</a>
+                <a href="slide 19 chart 1.2.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 19 chart 1.2.html</a>
+                <a href="slide 19 chart 1.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 19 chart 1.html</a>
+                <a href="slide 19 chart 2.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 19 chart 2.html</a>
+                <a href="slide 19 chart 3 slide 11.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 19 chart 3 slide 11.html</a>
+                <a href="slide 21.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 21.html</a>
+                <a href="slide 22.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 22.html</a>
+                <a href="slide 24.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 24.html</a>
+                <a href="slide 27 chart 1.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 27 chart 1.html</a>
+                <a href="slide 27 chart 2.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 27 chart 2.html</a>
+                <a href="slide 28.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 28.html</a>
+                <a href="slide 29.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 29.html</a>
+                <a href="slide 31 chart 1.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 31 chart 1.html</a>
+                <a href="slide 31 chart 2.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 31 chart 2.html</a>
+                <a href="slide 42.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide 42.html</a>
+                <a href="slide6.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide6.html</a>
+                <a href="slide25.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide25.html</a>
+                <a href="slide 26 table.html" class="menu-link block px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">slide26table.html</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-4 md:p-6 lg:p-8 h-screen">
+            <div class="w-full h-full bg-white rounded-lg shadow-lg overflow-hidden">
+                <iframe 
+                    id="contentFrame" 
+                    name="contentFrame" 
+                    class="w-full h-full border-0"
+                    src=""
+                    title="Content Display Area"
+                >
+                    <!-- Fallback content -->
+                    <p class="p-10 text-center text-gray-500">
+                        Your browser does not support iframes. Please click a link on the left to navigate.
+                    </p>
+                </iframe>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('a.menu-link');
+            const iframe = document.getElementById('contentFrame');
+            let activeLink = null; // To track the currently active link
+
+            // Function to set the active link style
+            function setActive(link) {
+                // Remove active class from the previous link
+                if (activeLink) {
+                    activeLink.classList.remove('bg-indigo-600', 'text-white');
+                    activeLink.classList.add('text-gray-700', 'hover:bg-indigo-100', 'hover:text-indigo-700');
+                }
+                
+                // Add active class to the new link
+                link.classList.add('bg-indigo-600', 'text-white');
+                link.classList.remove('text-gray-700', 'hover:bg-indigo-100', 'hover:text-indigo-700');
+                activeLink = link;
+            }
+
+            // Add click event listeners to all menu links
+            links.forEach(link => {
+                link.addEventListener('click', function(event) {
+                    // Prevent the default link behavior (full page reload)
+                    event.preventDefault();
+                    
+                    // Get the URL from the link's href attribute
+                    const url = this.getAttribute('href');
+                    
+                    // Set the iframe's src attribute to the new URL
+                    iframe.src = url;
+                    
+                    // Update the active link styling
+                    setActive(this);
+                });
+            });
+
+            // Optional: Load the first link by default
+            if (links.length > 0) {
+                links[0].click(); // Simulate a click on the first link
+            } else {
+                // If no links, show a message in the iframe
+                iframe.srcdoc = `
+                    <div style='display:flex; align-items:center; justify-content:center; height:100%; font-family:sans-serif; color:#6b7280;'>
+                        <h2 style='font-size:1.5rem; font-weight:600;'>Select a file from the menu</h2>
+                    </div>
+                `;
+            }
+        });
+    </script>
+
+</body>
+</html>

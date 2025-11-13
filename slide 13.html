@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consuming Class Distribution</title>
+    <!-- 1. Import Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 2. Import Chart.js Datalabels plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f7f9fc;
+            color: #333;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Container for the chart AND the circles */
+        .chart-wrapper {
+            width: 90%;
+            max-width: 900px;
+            background-color: #fff;
+            padding: 40px 20px 20px 20px; /* Extra padding at the top for circles */
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+            position: relative; /* CRITICAL: For positioning the circles */
+        }
+        
+        /* Container for the total circles */
+        .total-circles-container {
+            position: absolute;
+            top: 25px; /* Position circles near the top */
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            padding: 0 10%; /* Adjust padding to align circles with bars */
+            pointer-events: none; /* Allows clicks to pass through */
+            z-index: 10;
+        }
+
+        .total-circle {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            border: 3px solid #E1B168; /* Gold-like border from image */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #333;
+            background-color: #fdfaf3;
+            font-size: 1.1em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Container for the chart canvas, with fixed height */
+        .chart-container {
+            width: 100%;
+            height: 500px; /* User-requested height */
+            position: relative;
+        }
+
+        /* Color controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+        }
+        .controls-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .controls-group label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9em;
+        }
+        .controls-group input[type="color"] {
+            width: 45px;
+            height: 45px;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            border-radius: 8px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: transparent;
+        }
+        /* Style the color picker 'button' */
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+            border-radius: 8px;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        /* Data modification table */
+        .data-table-container {
+            width: 90%;
+            max-width: 900px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-top: 20px;
+            overflow-x: auto; /* For small screens */
+        }
+        .data-table-container h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f9f9f9;
+            color: #333;
+            font-size: 0.9em;
+        }
+        td input {
+            width: 70px;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 1em;
+        }
+        td:first-child {
+            font-weight: 600;
+            background-color: #f9f9f9;
+        }
+
+        /* Custom HTML Legend */
+        .chart-legend {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            font-size: 0.9em;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color-box {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Consuming Class Distribution (Millions)</h1>
+
+    <!-- 1. Chart and Circles Wrapper -->
+    <div class="chart-wrapper">
+        <!-- This container will be populated by JavaScript -->
+        <div class="total-circles-container" id="total-circles-container">
+            <!-- Example: <div class="total-circle">80m</div> -->
+        </div>
+
+        <!-- The canvas container with the fixed height -->
+        <div class="chart-container">
+            <canvas id="myStackedBarChart"></canvas>
+        </div>
+
+        <!-- This container will be populated by JavaScript -->
+        <div class="chart-legend" id="chart-legend">
+            <!-- Example: <div class="legend-item"><div class="legend-color-box" style="..."></div><span>Label</span></div> -->
+        </div>
+    </div>
+
+    <!-- 2. Color Controls -->
+    <div class="controls">
+        <div class="controls-group">
+            <label>Below Class</label>
+            <input type="color" id="colorBelow" value="#071C2C">
+        </div>
+        <div class="controls-group">
+            <label>Entry-level Class</label>
+            <input type="color" id="colorEntry" value="#58595B">
+        </div>
+        <div class="controls-group">
+            <label>Established Class</label>
+            <input type="color" id="colorEstablished" value="#8B7053">
+        </div>
+        <div class="controls-group">
+            <label>Higher Class</label>
+            <input type="color" id="colorHigher" value="#C0C0C0"> <!-- Added Silver as 4th color -->
+        </div>
+    </div>
+
+    <!-- 3. Data Modification Table -->
+    <div class="data-table-container">
+        <h2>Modify Chart Data (in Millions)</h2>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Year</th>
+                    <th>Below Class (<$11)</th>
+                    <th>Entry-level ($11-$30)</th>
+                    <th>Established ($30-$70)</th>
+                    <th>Higher (>$70)</th>
+                    <th>Total Population</th>
+                </tr>
+            </thead>
+            <!-- This table body will be populated by JavaScript -->
+            <tbody id="dataTableBody">
+                <!-- Example Row:
+                <tr>
+                    <td>2000</td>
+                    <td><input type="number" value="74" data-year="0" data-segment="0"></td>
+                    ...
+                    <td><input type="number" value="80" data-year="0" data-total="true"></td>
+                </tr>
+                -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Register the datalabels plugin globally
+        Chart.register(ChartDataLabels);
+
+        // --- GLOBAL DATA ---
+        // Store all chart data in a single object
+        let chartDataStore = {
+            labels: ['2000', '2010', '2020', '2030'],
+            datasets: [
+                {
+                    label: 'Below consuming class (<$11 per day)',
+                    data: [74, 72, 58, 27],
+                    backgroundColor: '#071C2C', // Default from user palette
+                },
+                {
+                    label: 'Entry-level consuming class ($11-$30 per day)',
+                    data: [5, 14, 36, 57],
+                    backgroundColor: '#58595B', // Default from user palette
+                },
+                {
+                    label: 'Established consuming class ($30-$70 per day)',
+                    data: [1, 1, 4, 18],
+                    backgroundColor: '#8B7053', // Default from user palette
+                },
+                {
+                    label: 'Higher consuming class (>$70 per day)',
+                    data: [0, 0, 0, 2], // Data from image (2030 has a '2')
+                    backgroundColor: '#C0C0C0', // Added 4th color
+                }
+            ],
+            totals: [80, 87, 98, 104] // Data for the top circles
+        };
+
+        // --- CHART INSTANCE ---
+        let myChart;
+        const ctx = document.getElementById('myStackedBarChart').getContext('2d');
+
+        // --- RENDER FUNCTIONS ---
+
+        /**
+         * Renders the main stacked bar chart
+         */
+        function renderChart() {
+            if (myChart) {
+                myChart.destroy(); // Clear old chart
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartDataStore.labels,
+                    datasets: chartDataStore.datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Allows canvas to fill 500px container
+                    
+                    scales: {
+                        x: {
+                            stacked: true, // Stack bars on X-axis
+                            grid: {
+                                display: false, // No vertical grid lines
+                            },
+                        },
+                        y: {
+                            stacked: true, // Stack bars on Y-axis
+                            beginAtZero: true,
+                            max: 120, // Match the image's Y-axis
+                            grid: {
+                                color: '#e0e0e0', // Lighter grid lines
+                                borderDash: [2, 4], // Dashed lines
+                            },
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false // We use a custom HTML legend
+                        },
+                        tooltip: {
+                            enabled: true,
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        // Configure datalabels plugin
+                        datalabels: {
+                            color: 'white',
+                            font: {
+                                weight: 'bold',
+                                size: 14,
+                            },
+                            // Only show label if value is greater than 1
+                            formatter: (value) => {
+                                return value > 1 ? value : '';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * Renders the "Total" circles above the chart
+         */
+        function renderTotals() {
+            const container = document.getElementById('total-circles-container');
+            container.innerHTML = ''; // Clear old circles
+
+            chartDataStore.totals.forEach(total => {
+                const circle = document.createElement('div');
+                circle.className = 'total-circle';
+                circle.textContent = `${total}m`;
+                container.appendChild(circle);
+            });
+        }
+
+        /**
+         * Populates the data modification table from the global data store
+         */
+        function populateTable() {
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '';
+
+            chartDataStore.labels.forEach((year, yearIndex) => {
+                const row = document.createElement('tr');
+                
+                // 1. Year Label
+                row.innerHTML = `<td>${year}</td>`;
+
+                // 2. Segment Inputs
+                chartDataStore.datasets.forEach((segment, segmentIndex) => {
+                    const cell = document.createElement('td');
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.value = segment.data[yearIndex];
+                    input.setAttribute('data-year-index', yearIndex);
+                    input.setAttribute('data-segment-index', segmentIndex);
+                    input.addEventListener('change', updateDataFromTable);
+                    cell.appendChild(input);
+                    row.appendChild(cell);
+                });
+
+                // 3. Total Input
+                const totalCell = document.createElement('td');
+                const totalInput = document.createElement('input');
+                totalInput.type = 'number';
+                totalInput.value = chartDataStore.totals[yearIndex];
+                totalInput.setAttribute('data-year-index', yearIndex);
+                totalInput.setAttribute('data-total', 'true');
+                totalInput.addEventListener('change', updateDataFromTable);
+                totalCell.appendChild(totalInput);
+                row.appendChild(totalCell);
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * Creates the custom HTML legend at the bottom
+         */
+        function createCustomLegend() {
+            const legendContainer = document.getElementById('chart-legend');
+            legendContainer.innerHTML = '';
+
+            chartDataStore.datasets.forEach((dataset, index) => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+
+                const colorBox = document.createElement('div');
+                colorBox.className = 'legend-color-box';
+                colorBox.style.backgroundColor = dataset.backgroundColor;
+                // Give it an ID to be updated by the color picker
+                colorBox.id = `legend-color-${index}`;
+
+                const label = document.createElement('span');
+                label.textContent = dataset.label;
+
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(label);
+                legendContainer.appendChild(legendItem);
+            });
+        }
+
+        // --- UPDATE FUNCTIONS (EVENT HANDLERS) ---
+
+        /**
+         * Reads all values from the table and updates the global data store
+         */
+        function updateDataFromTable() {
+            const inputs = document.querySelectorAll('#dataTableBody input');
+            
+            // Create new arrays to hold data
+            let newDatasets = chartDataStore.datasets.map(ds => ({ ...ds, data: [] }));
+            let newTotals = [];
+
+            inputs.forEach(input => {
+                const yearIndex = parseInt(input.getAttribute('data-year-index'));
+                const value = parseFloat(input.value) || 0;
+
+                if (input.getAttribute('data-total')) {
+                    // This is a total input
+                    newTotals[yearIndex] = value;
+                } else {
+                    // This is a segment input
+                    const segmentIndex = parseInt(input.getAttribute('data-segment-index'));
+                    newDatasets[segmentIndex].data[yearIndex] = value;
+                }
+            });
+
+            // Update the global store
+            chartDataStore.datasets = newDatasets;
+            chartDataStore.totals = newTotals;
+
+            // Re-render everything
+            renderChart();
+            renderTotals();
+        }
+
+        /**
+         * Reads all color pickers and updates the chart and legend
+         */
+        function updateChartColors() {
+            const colorBelow = document.getElementById('colorBelow').value;
+            const colorEntry = document.getElementById('colorEntry').value;
+            const colorEstablished = document.getElementById('colorEstablished').value;
+            const colorHigher = document.getElementById('colorHigher').value;
+
+            const colors = [colorBelow, colorEntry, colorEstablished, colorHigher];
+
+            // Update the global data store
+            chartDataStore.datasets.forEach((dataset, index) => {
+                dataset.backgroundColor = colors[index];
+            });
+
+            // Update the legend colors
+            colors.forEach((color, index) => {
+                document.getElementById(`legend-color-${index}`).style.backgroundColor = color;
+            });
+
+            // Re-render the chart
+            renderChart();
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Populate the interactive elements
+            populateTable();
+            createCustomLegend();
+
+            // 2. Set up event listeners for color pickers
+            document.getElementById('colorBelow').addEventListener('input', updateChartColors);
+            document.getElementById('colorEntry').addEventListener('input', updateChartColors);
+            document.getElementById('colorEstablished').addEventListener('input', updateChartColors);
+            document.getElementById('colorHigher').addEventListener('input', updateChartColors);
+
+            // 3. Initial render
+            renderTotals();
+            renderChart();
+        });
+
+    </script>
+</body>
+</html>

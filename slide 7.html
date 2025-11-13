@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GDP per Capita Chart (16:9)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap; /* Allows wrapping on smaller screens */
+            gap: 20px;
+            width: 95%;
+            max-width: 1400px;
+            justify-content: center;
+        }
+        .chart-container {
+            flex: 2; /* Takes up 2 parts of the space */
+            min-width: 600px; /* Prevent it from getting too small */
+            border: 1px solid #ccc;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: white;
+            border-radius: 8px;
+            /* The height will be determined by the aspect ratio of the canvas */
+        }
+        .controls-container {
+            flex: 1; /* Takes up 1 part of the space */
+            min-width: 300px;
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: white;
+            border-radius: 8px;
+            max-height: 80vh; /* Scroll if it gets too tall */
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+            text-align: left;
+            padding: 6px;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+        input[type="number"], input[type="text"] {
+            width: 90%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .color-input {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .color-box {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%; /* Full width buttons for better UI */
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .section-title {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>GDP per Capita</h1>
+    <div class="container">
+        <div class="chart-container">
+            <canvas id="gdpChart"></canvas>
+        </div>
+        <div class="controls-container">
+            <h2 class="section-title">Chart Controls</h2>
+            
+            <h3>Color Pattern</h3>
+            <div class="color-input">
+                <label>Line Color:</label>
+                <input type="color" id="lineColor" value="#8B7053"> 
+                <span class="color-box" style="background-color: #8B7053;"></span>
+            </div>
+            <div class="color-input">
+                <label>Point Border:</label>
+                <input type="color" id="pointBorderColor" value="#071C2C"> 
+                <span class="color-box" style="background-color: #071C2C;"></span>
+            </div>
+            <div class="color-input">
+                <label>Point Background:</label>
+                <input type="color" id="pointBackgroundColor" value="#58595B"> 
+                <span class="color-box" style="background-color: #58595B;"></span>
+            </div>
+            <button onclick="updateChartColors()">Apply Colors</button>
+
+            <h3 class="section-title" style="margin-top: 30px;">Modify Data</h3>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>GDP ($)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="addRow()" style="background-color: #28a745;">Add Row</button>
+                <button onclick="updateChartData()">Update Chart</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initial Data from the image
+        const initialData = [
+            { year: 1987, gdp: 856.91 },
+            { year: 1988, gdp: 464.58 },
+            { year: 1989, gdp: 123.36 },
+            { year: 1990, gdp: 178.97 },
+            { year: 1991, gdp: 178.97 },
+            { year: 1992, gdp: 178.97 },
+            { year: 1993, gdp: 358.66 },
+            { year: 1994, gdp: 358.66 },
+            { year: 1995, gdp: 358.66 },
+            { year: 1996, gdp: 448.12 },
+            { year: 1997, gdp: 448.12 },
+            { year: 1998, gdp: 513.2 },
+            { year: 1999, gdp: 513.2 },
+            { year: 2000, gdp: 513.2 },
+            { year: 2001, gdp: 756.98 },
+            { year: 2002, gdp: 756.98 },
+            { year: 2003, gdp: 756.98 },
+            { year: 2004, gdp: 756.98 },
+            { year: 2005, gdp: 1152.27 },
+            { year: 2006, gdp: 1152.27 },
+            { year: 2007, gdp: 1446.56 },
+            { year: 2008, gdp: 1446.56 },
+            { year: 2009, gdp: 1949.83 },
+            { year: 2010, gdp: 1949.83 },
+            { year: 2011, gdp: 2369.97 },
+            { year: 2012, gdp: 2369.97 },
+            { year: 2013, gdp: 2720.17 },
+            { year: 2014, gdp: 2720.17 },
+            { year: 2015, gdp: 3216.25 },
+            { year: 2016, gdp: 3216.25 },
+            { year: 2017, gdp: 3548.89 },
+            { year: 2018, gdp: 3548.89 },
+            { year: 2019, gdp: 4132.93 },
+            { year: 2020, gdp: 4132.93 },
+            { year: 2021, gdp: 4535.76 },
+            { year: 2022, gdp: 5041.89 },
+            { year: 2023, gdp: 5334.3 },
+            { year: 2024, gdp: 5640.99 },
+            { year: 2025, gdp: 5957.56 },
+            { year: 2026, gdp: 6289.51 },
+            { year: 2027, gdp: 6289.51 },
+            { year: 2028, gdp: 6289.51 },
+            { year: 2029, gdp: 6289.51 }
+        ];
+
+        let chartData = [...initialData];
+
+        const ctx = document.getElementById('gdpChart').getContext('2d');
+        let gdpChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.map(d => d.year),
+                datasets: [{
+                    label: 'GDP per capita in U.S. dollars',
+                    data: chartData.map(d => d.gdp),
+                    borderColor: '#8B7053',
+                    backgroundColor: 'rgba(0, 0, 0, 0)',
+                    borderWidth: 2,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#58595B',
+                    pointBorderColor: '#071C2C',
+                    pointHoverRadius: 7,
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                // CHANGE: Enforce 16:9 Aspect Ratio
+                aspectRatio: 16 / 9,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Year'
+                        },
+                        ticks: {
+                            callback: function(val, index) {
+                                return index % 4 === 0 ? this.getLabelForValue(val) : '';
+                            }
+                        },
+                        grid: {
+                            display: false // Matches image cleaner look
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'GDP per capita in U.S. dollars'
+                        },
+                        beginAtZero: true,
+                        suggestedMax: 7000,
+                        grid: {
+                            borderDash: [2, 4], // Dashed grid lines like the image
+                            color: '#e5e5e5'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function populateDataTable() {
+            const dataTableBody = document.querySelector('#dataTable tbody');
+            dataTableBody.innerHTML = '';
+
+            chartData.forEach((item, index) => {
+                const row = dataTableBody.insertRow();
+                row.insertCell(0).innerHTML = `<input type="number" value="${item.year}" onchange="editData(${index}, 'year', this.value)">`;
+                row.insertCell(1).innerHTML = `<input type="number" step="0.01" value="${item.gdp}" onchange="editData(${index}, 'gdp', this.value)">`;
+                row.insertCell(2).innerHTML = `<button onclick="deleteRow(${index})" style="background-color: #dc3545; margin-top:0; padding: 5px 10px;">Delete</button>`;
+            });
+        }
+
+        function editData(index, field, value) {
+            if (field === 'year') {
+                chartData[index].year = parseInt(value);
+            } else if (field === 'gdp') {
+                chartData[index].gdp = parseFloat(value);
+            }
+        }
+
+        function addRow() {
+            const lastYear = chartData.length > 0 ? chartData[chartData.length - 1].year : 1986;
+            chartData.push({ year: lastYear + 1, gdp: 0 });
+            populateDataTable();
+            // Auto scroll to bottom of table
+            const tableContainer = document.querySelector('#dataTable').parentNode;
+            tableContainer.scrollTop = tableContainer.scrollHeight;
+        }
+
+        function deleteRow(index) {
+            chartData.splice(index, 1);
+            populateDataTable();
+            updateChartData();
+        }
+
+        function updateChartData() {
+            chartData.sort((a, b) => a.year - b.year);
+            gdpChart.data.labels = chartData.map(d => d.year);
+            gdpChart.data.datasets[0].data = chartData.map(d => d.gdp);
+            gdpChart.update();
+            populateDataTable();
+        }
+
+        function updateChartColors() {
+            const lineColor = document.getElementById('lineColor').value;
+            const pointBorderColor = document.getElementById('pointBorderColor').value;
+            const pointBackgroundColor = document.getElementById('pointBackgroundColor').value;
+
+            gdpChart.data.datasets[0].borderColor = lineColor;
+            gdpChart.data.datasets[0].pointBorderColor = pointBorderColor;
+            gdpChart.data.datasets[0].pointBackgroundColor = pointBackgroundColor;
+            gdpChart.update();
+
+            document.querySelector('#lineColor + .color-box').style.backgroundColor = lineColor;
+            document.querySelector('#pointBorderColor + .color-box').style.backgroundColor = pointBorderColor;
+            document.querySelector('#pointBackgroundColor + .color-box').style.backgroundColor = pointBackgroundColor;
+        }
+
+        document.addEventListener('DOMContentLoaded', populateDataTable);
+    </script>
+</body>
+</html>

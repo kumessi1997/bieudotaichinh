@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FDI Column Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.0.0/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            color: #333;
+        }
+
+        .chart-header {
+            width: 90%;
+            max-width: 800px;
+            margin-bottom: 20px;
+            text-align: center; /* Centered for column chart layout */
+        }
+        .chart-header h1 {
+            font-size: 1.6em;
+            color: #071C2C;
+            margin-bottom: 5px;
+        }
+        .chart-header .underline {
+            height: 3px;
+            background-color: #8B7053;
+            width: 50%; /* Shorter underline looks better centered */
+            margin: 0 auto 15px auto;
+        }
+
+        /* Control Panel */
+        .controls {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #58595B;
+            font-size: 13px;
+        }
+
+        input[type="color"] {
+            border: none;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            border-radius: 4px;
+        }
+
+        /* Chart Card */
+        .chart-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 800px;
+            height: 500px; /* Taller height for vertical columns */
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chart-header">
+    <h1>FDI by country, 2024</h1>
+    <div class="underline"></div>
+</div>
+
+<div class="controls">
+    <div class="control-group">
+        <label for="highlightBarColor">Highest (Singapore):</label>
+        <input type="color" id="highlightBarColor" value="#8B7053"> 
+    </div>
+    <div class="control-group">
+        <label for="otherBarsColor">Others:</label>
+        <input type="color" id="otherBarsColor" value="#95BCA6"> 
+    </div>
+    <div class="control-group">
+        <label for="textColor">Title & Text:</label>
+        <input type="color" id="textColor" value="#071C2C"> 
+    </div>
+</div>
+
+<div class="chart-card">
+    <canvas id="fdiColumnChart"></canvas>
+</div>
+
+<script>
+    Chart.register(ChartDataLabels);
+
+    const ctx = document.getElementById('fdiColumnChart').getContext('2d');
+
+    const countries = ['Singapore', 'South Korea', 'Hong Kong', 'China', 'Japan', 'Taiwan'];
+    const fdiValues = [10.2, 7.06, 4.35, 4.73, 3.50, 2.08];
+
+    // Find max value for highlighting
+    const highestFDIIndex = fdiValues.indexOf(Math.max(...fdiValues));
+
+    // Initial Colors
+    let highlightColor = document.getElementById('highlightBarColor').value;
+    let otherColor = document.getElementById('otherBarsColor').value;
+    let textColor = document.getElementById('textColor').value;
+
+    function getColors(highlight, other) {
+        return fdiValues.map((_, i) => i === highestFDIIndex ? highlight : other);
+    }
+
+    const chartInstance = new Chart(ctx, {
+        type: 'bar', // Default 'bar' is vertical (column) in Chart.js 3+
+        data: {
+            labels: countries,
+            datasets: [{
+                data: fdiValues,
+                backgroundColor: getColors(highlightColor, otherColor),
+                borderRadius: 4, // Slight rounding on top of columns
+                barPercentage: 0.6,
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top', // Number sits on top of the column
+                    offset: 0,
+                    color: textColor,
+                    font: { weight: 'bold', size: 12 },
+                    formatter: (val) => val.toFixed(2)
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: (ctx) => `$${ctx.raw} Billion` }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'USD Billion',
+                        color: textColor,
+                        font: { weight: 'bold' }
+                    },
+                    ticks: { color: textColor },
+                    grid: { color: '#e0e0e0', borderDash: [5, 5] },
+                    grace: '10%' // Adds extra space at top so labels don't get cut off
+                },
+                x: {
+                    ticks: { color: textColor, font: { weight: 'bold' } },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    // Interactive Color Updates
+    function updateColors() {
+        highlightColor = document.getElementById('highlightBarColor').value;
+        otherColor = document.getElementById('otherBarsColor').value;
+        textColor = document.getElementById('textColor').value;
+
+        // Update Bars
+        chartInstance.data.datasets[0].backgroundColor = getColors(highlightColor, otherColor);
+        
+        // Update Text Elements
+        chartInstance.data.datasets[0].datalabels.color = textColor;
+        chartInstance.options.scales.y.title.color = textColor;
+        chartInstance.options.scales.y.ticks.color = textColor;
+        chartInstance.options.scales.x.ticks.color = textColor;
+
+        // Update DOM Title/Underline
+        document.querySelector('.chart-header h1').style.color = textColor;
+        document.querySelector('.chart-header .underline').style.backgroundColor = highlightColor;
+
+        chartInstance.update();
+    }
+
+    document.querySelectorAll('input[type="color"]').forEach(input => {
+        input.addEventListener('input', updateColors);
+    });
+</script>
+
+</body>
+</html>

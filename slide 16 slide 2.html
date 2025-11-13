@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>International Arrivals Chart - New Colors</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9; /* Subtle light background */
+        }
+        .chart-container {
+            width: 80%;
+            max-width: 800px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="chart-container">
+    <canvas id="arrivalsChart"></canvas>
+</div>
+
+<script>
+    const ctx = document.getElementById('arrivalsChart').getContext('2d');
+
+    // Data extracted from your previous image
+    const years = ['2018', '2019', '2020', '2021', '2022', '2023', '2024'];
+    const arrivals = [15.5, 18.0, 3.8, 0.2, 3.7, 12.6, 17.6];
+
+    // --- NEW COLORS FROM YOUR IMAGE ---
+    const historicalBarColor = '#1A202C'; // Dark blue/black from the first swatch
+    const forecastBarColor = '#6E5C4E'; // Brown from the second swatch
+    // You could also use the lighter shades for grid lines or text if desired:
+    // const lightGray1 = '#D0D5DA';
+    // const lightGray2 = '#E6E9EC';
+    // const covidBoxColor = 'rgba(208, 213, 218, 0.4)'; // Using a lighter gray for the box
+
+    const backgroundColors = years.map(year => 
+        year === '2024' ? forecastBarColor : historicalBarColor
+    );
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [{
+                label: 'International Arrivals (Million)',
+                data: arrivals,
+                backgroundColor: backgroundColors,
+                borderWidth: 0,
+                barPercentage: 0.6 
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'International Arrivals (Million)',
+                    font: { size: 16 }
+                },
+                annotation: {
+                    annotations: {
+                        box1: {
+                            type: 'box',
+                            xMin: 1.5,
+                            xMax: 3.5,
+                            yMin: 0,
+                            yMax: 20,
+                            backgroundColor: 'rgba(180, 185, 190, 0.25)', // A lighter, neutral gray for the box
+                            borderWidth: 0
+                        },
+                        label1: {
+                            type: 'label',
+                            xValue: 2.5,
+                            yValue: 10,
+                            content: ['Covid-19'],
+                            font: { size: 20, weight: 'bold' },
+                            color: '#444' // Keep text readable
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 20,
+                    grid: {
+                        color: '#e0e0e0' // Light grid lines
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

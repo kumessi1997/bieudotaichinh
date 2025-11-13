@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Margin Lending Chart</title>
+    <!-- 1. Import Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f7f9fc;
+            color: #333;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Color controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+        }
+        .controls-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .controls-group label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9em;
+        }
+        .controls-group input[type="color"] {
+            width: 45px;
+            height: 45px;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        /* Container for the chart canvas, with fixed aspect ratio */
+        .chart-container {
+            width: 90%;
+            max-width: 1000px;
+            /* Aspect ratio 9:5 (width:height) as 5:9 (height:width) */
+            aspect-ratio: 9 / 5;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            position: relative;
+        }
+
+        /* Data modification table */
+        .data-table-container {
+            width: 90%;
+            max-width: 1000px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-top: 30px;
+            overflow-x: auto; /* For small screens */
+        }
+        .data-table-container h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 0.85em;
+            white-space: nowrap; /* Prevent date labels from wrapping */
+        }
+        th {
+            background-color: #f9f9f9;
+            color: #333;
+            font-size: 0.9em;
+        }
+        td input {
+            width: 80px; /* Adjust input width for data clarity */
+            padding: 8px 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 1em;
+        }
+        td:first-child {
+            font-weight: 600;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Margin Lending & Equity Ratio</h1>
+
+    <!-- 2. Color Controls -->
+    <div class="controls">
+        <div class="controls-group">
+            <label>Margin Lending Color</label>
+            <input type="color" id="colorLending" value="#8B7053">
+        </div>
+        <div class="controls-group">
+            <label>Lending/Equity Ratio Color</label>
+            <input type="color" id="colorRatio" value="#071C2C">
+        </div>
+    </div>
+
+    <!-- 3. Chart Container -->
+    <div class="chart-container">
+        <canvas id="myComboChart"></canvas>
+    </div>
+
+    <!-- 4. Data Modification Table -->
+    <div class="data-table-container">
+        <h2>Modify Chart Data</h2>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Margin Lending (Trillion VND)</th>
+                    <th>Total Room (Trillion VND)</th>
+                    <th>Lending/Equity Ratio</th>
+                </tr>
+            </thead>
+            <!-- This table body will be populated by JavaScript -->
+            <tbody id="dataTableBody">
+                <!-- Data rows will be generated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // --- GLOBAL DATA STORE ---
+        // Data estimated from the provided line and bar chart image
+        const labels = [
+            '1Q20', '2Q20', '3Q20', '4Q20', '1Q21', '2Q21', '3Q21', '4Q21', '1Q22', '2Q22', '3Q22', '4Q22', 
+            '1Q23', '2Q23', '3Q23', '4Q23', '1Q24', '2Q24', '3Q24', '4Q24', '1Q25', '2Q25'
+        ];
+        
+        // Data for the solid bar
+        let marginLendingData = [50, 55, 70, 90, 110, 140, 200, 190, 160, 170, 120, 125, 140, 160, 175, 185, 205, 220, 230, 245, 280, 290];
+        // Data for the top of the dashed bar
+        let totalRoomData = [170, 175, 180, 195, 210, 230, 270, 310, 340, 390, 395, 410, 420, 440, 460, 480, 500, 520, 550, 570, 590, 610];
+        // Data for the line chart
+        let ratioData = [0.61, 0.65, 0.75, 0.98, 1.10, 1.23, 1.18, 1.27, 1.25, 0.85, 0.86, 0.60, 0.60, 0.69, 0.74, 0.79, 0.85, 0.89, 0.88, 0.88, 0.97, 1.01];
+        // This function calculates the "Room" data based on the two main data arrays
+        function getRoomData(margin, total) {
+            return total.map((t, i) => Math.max(0, t - margin[i])); // Ensure room isn't negative
+        }
+
+        let chartDataStore = {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Margin lending',
+                    data: marginLendingData,
+                    backgroundColor: '#8B7053', // User color 1
+                    yAxisID: 'y',
+                    stack: 'stack0' // Both bars on the same stack
+                },
+                {
+                    label: 'Room for Margin Lending',
+                    data: getRoomData(marginLendingData, totalRoomData),
+                    backgroundColor: '#8B705380', // User color 1 + 50% alpha
+                    yAxisID: 'y',
+                    stack: 'stack0' // Both bars on the same stack
+                },
+                {
+                    label: 'Margin Lending/ Equity ratio',
+                    data: ratioData,
+                    borderColor: '#071C2C', // User color 2
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    pointRadius: 1.5,
+                    pointBackgroundColor: '#071C2C',
+                    tension: 0.1, // Slight curve
+                    type: 'line',
+                    yAxisID: 'y1' // Right Y-axis
+                }
+            ]
+        };
+
+        // --- CHART INSTANCE ---
+        let myChart;
+        const ctx = document.getElementById('myComboChart').getContext('2d');
+        const gridColor = '#58595B'; // User color 3 for text/grids
+
+        // --- RENDER FUNCTIONS ---
+
+        /**
+         * Renders the main combo chart
+         */
+        function renderChart() {
+            if (myChart) {
+                myChart.destroy(); // Clear old chart
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'bar', // Default type, datasets define their own
+                data: chartDataStore,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // CRITICAL for aspect-ratio container
+                    scales: {
+                        y: { // Left Y-axis for Trillion VND
+                            type: 'linear',
+                            position: 'left',
+                            beginAtZero: true,
+                            min: 0,
+                            max: 700, // Match image
+                            stacked: true, // This axis is stacked
+                            grid: {
+                                color: `${gridColor}30`,
+                                zeroLineColor: gridColor,
+                                zeroLineWidth: 1
+                            },
+                            ticks: {
+                                color: gridColor,
+                            },
+                            title: {
+                                display: true,
+                                text: 'Trillion VND',
+                                color: gridColor,
+                                font: { size: 14 }
+                            }
+                        },
+                        y1: { // Right Y-axis for Ratio
+                            type: 'linear',
+                            position: 'right',
+                            beginAtZero: true,
+                            min: 0,
+                            max: 1.4, // Match image
+                            grid: {
+                                display: false, // No grid lines for right axis
+                            },
+                            ticks: {
+                                color: gridColor,
+                            },
+                            title: {
+                                display: true,
+                                text: 'Margin Lending/ Equity ratio',
+                                color: gridColor,
+                                font: { size: 14 }
+                            }
+                        },
+                        x: { // X-axis for Dates
+                            stacked: true, // This axis is stacked
+                            grid: {
+                                display: false, // No vertical grid lines
+                            },
+                            ticks: {
+                                color: gridColor,
+                                maxRotation: 45,
+                                minRotation: 45,
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom', // Match image
+                            labels: {
+                                color: gridColor,
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                }
+            });
+        }
+
+        /**
+         * Populates the data modification table from the global data store
+         */
+        function populateTable() {
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '';
+
+            labels.forEach((label, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${label}</td>
+                    <td><input type="number" step="10" value="${marginLendingData[index]}" data-index="${index}" data-type="margin"></td>
+                    <td><input type="number" step="10" value="${totalRoomData[index]}" data-index="${index}" data-type="total"></td>
+                    <td><input type="number" step="0.01" value="${ratioData[index]}" data-index="${index}" data-type="ratio"></td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Add event listener to the whole table body
+            tableBody.addEventListener('change', updateDataFromTable);
+        }
+
+        /**
+         * Reads all values from the table and updates the chart
+         */
+        function updateDataFromTable(event) {
+            // Read all data from the table inputs
+            const newMarginData = [];
+            const newTotalData = [];
+            const newRatioData = [];
+
+            const rows = document.getElementById('dataTableBody').rows;
+            for (let row of rows) {
+                newMarginData.push(parseFloat(row.cells[1].getElementsByTagName('input')[0].value) || 0);
+                newTotalData.push(parseFloat(row.cells[2].getElementsByTagName('input')[0].value) || 0);
+                newRatioData.push(parseFloat(row.cells[3].getElementsByTagName('input')[0].value) || 0);
+            }
+            
+            // Update the source arrays
+            marginLendingData = newMarginData;
+            totalRoomData = newTotalData;
+            ratioData = newRatioData;
+
+            // Update the chartDataStore
+            chartDataStore.datasets[0].data = marginLendingData;
+            chartDataStore.datasets[1].data = getRoomData(marginLendingData, totalRoomData);
+            chartDataStore.datasets[2].data = ratioData;
+
+            // Re-render the chart
+            renderChart();
+        }
+
+        /**
+         * Reads color pickers and updates the chart
+         */
+        function updateChartColors() {
+            const lendingColor = document.getElementById('colorLending').value;
+            const ratioColor = document.getElementById('colorRatio').value;
+
+            // Update the chartDataStore
+            chartDataStore.datasets[0].backgroundColor = lendingColor;
+            chartDataStore.datasets[1].backgroundColor = lendingColor + '80'; // Add transparency
+            
+            chartDataStore.datasets[2].borderColor = ratioColor;
+            chartDataStore.datasets[2].pointBackgroundColor = ratioColor;
+
+            // Re-render the chart
+            renderChart();
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Populate the interactive elements
+            populateTable();
+
+            // 2. Set up event listeners for color pickers
+            document.getElementById('colorLending').addEventListener('input', updateChartColors);
+            document.getElementById('colorRatio').addEventListener('input', updateChartColors);
+
+            // 3. Initial render
+            renderChart();
+        });
+
+    </script>
+</body>
+</html>
