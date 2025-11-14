@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sector Distribution Pie Chart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif; /* Applied Open Sans */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f7f9fc;
+            color: #333;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Chart container */
+        .chart-and-legend-container {
+            display: flex;
+            flex-direction: row; /* Chart and legend side-by-side */
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            max-width: 1000px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            width: 100%; /* Default to full width for small screens */
+            max-width: 450px; /* Limit pie chart size */
+            aspect-ratio: 1 / 1; /* Square aspect ratio for pie chart */
+            position: relative;
+            margin: 20px; /* Spacing between chart and legend */
+        }
+
+        .chart-legend {
+            flex-grow: 1; /* Allow legend to take available space */
+            padding-left: 20px;
+            font-size: 1.1em; /* Larger font for legend */
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .legend-color-box {
+            width: 25px;
+            height: 25px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid #eee; /* Slight border to distinguish colors */
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .chart-and-legend-container {
+                flex-direction: row;
+            }
+            .chart-container {
+                width: 50%; /* Take half width on larger screens */
+                margin-right: 20px;
+                margin-left: 0;
+            }
+            .chart-legend {
+                padding-left: 0; /* Adjust padding */
+            }
+        }
+
+
+        /* Color controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+        }
+        .controls-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .controls-group label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9em;
+        }
+        .controls-group input[type="color"] {
+            width: 45px;
+            height: 45px;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        /* Data modification table */
+        .data-table-container {
+            width: 90%;
+            max-width: 800px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            margin-top: 30px;
+            overflow-x: auto; /* For small screens */
+        }
+        .data-table-container h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f9f9f9;
+            color: #333;
+            font-size: 0.9em;
+        }
+        td input[type="text"] {
+            width: 95%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        td input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Sector Distribution</h1>
+
+    <div class="controls">
+        <div class="controls-group">
+            <label>Manufacturing and Processing</label>
+            <input type="color" id="color0" value="#8B7053">
+        </div>
+        <div class="controls-group">
+            <label>Real Estate Business</label>
+            <input type="color" id="color1" value="#071C2C">
+        </div>
+        <div class="controls-group">
+            <label>Others</label>
+            <input type="color" id="color2" value="#58595B">
+        </div>
+    </div>
+
+    <div class="chart-and-legend-container">
+        <div class="chart-container">
+            <canvas id="myPieChart"></canvas>
+        </div>
+        <div id="chart-legend" class="chart-legend">
+            </div>
+    </div>
+
+    <div class="data-table-container">
+        <h2>Modify Chart Data</h2>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Label</th>
+                    <th>Percentage (%)</th>
+                </tr>
+            </thead>
+            <tbody id="dataTableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Register the datalabels plugin globally
+        Chart.register(ChartDataLabels);
+
+        // --- GLOBAL DATA STORE ---
+        let chartDataStore = {
+            labels: ['Manufacturing and Processing', 'Real Estate Business', 'Others'],
+            data: [73, 15, 12], // Percentages from image
+            colors: ['#8B7053', '#071C2C', '#58595B'] // User-provided colors
+        };
+
+        // --- CHART INSTANCE ---
+        let myPieChart;
+        const ctx = document.getElementById('myPieChart').getContext('2d');
+
+        // --- RENDER FUNCTIONS ---
+
+        /**
+         * Renders the pie chart
+         */
+        function renderChart() {
+            if (myPieChart) {
+                myPieChart.destroy(); // Clear old chart
+            }
+
+            myPieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: chartDataStore.labels,
+                    datasets: [{
+                        data: chartDataStore.data,
+                        backgroundColor: chartDataStore.colors,
+                        borderColor: '#fff', // White border between slices
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // CRITICAL for aspect-ratio container
+                    plugins: {
+                        legend: {
+                            display: false, // Hide default legend; we'll create a custom one
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        // Datalabels plugin configuration
+                        datalabels: {
+                            color: '#fff', // White text for labels
+                            font: {
+                                weight: 'bold',
+                                size: 14,
+                                family: 'Open Sans'
+                            },
+                            formatter: (value, context) => {
+                                // Only show label if the value is visible (not too small)
+                                return value > 5 ? value + '%' : '';
+                            }
+                        }
+                    }
+                }
+            });
+            createCustomLegend(); // Update custom legend whenever chart renders
+        }
+
+        /**
+         * Creates and updates the custom HTML legend
+         */
+        function createCustomLegend() {
+            const legendContainer = document.getElementById('chart-legend');
+            legendContainer.innerHTML = ''; // Clear existing legend
+
+            chartDataStore.labels.forEach((label, index) => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+
+                const colorBox = document.createElement('div');
+                colorBox.className = 'legend-color-box';
+                colorBox.style.backgroundColor = chartDataStore.colors[index];
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = label;
+
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(textSpan);
+                legendContainer.appendChild(legendItem);
+            });
+        }
+
+        /**
+         * Populates the data modification table from the global data store
+         */
+        function populateTable() {
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '';
+
+            chartDataStore.labels.forEach((label, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <input type="text" value="${label}" data-index="${index}" data-field="label">
+                    </td>
+                    <td>
+                        <input type="number" value="${chartDataStore.data[index]}" data-index="${index}" data-field="value">
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Add event listener to the whole table body for efficiency
+            tableBody.addEventListener('change', updateDataFromTable);
+        }
+
+        /**
+         * Reads all values from the table and updates the global data store
+         */
+        function updateDataFromTable() {
+            const newLabels = [];
+            const newData = [];
+
+            const rows = document.querySelectorAll('#dataTableBody tr');
+            rows.forEach(row => {
+                const labelInput = row.querySelector('input[data-field="label"]');
+                const valueInput = row.querySelector('input[data-field="value"]');
+                
+                newLabels.push(labelInput.value);
+                newData.push(parseFloat(valueInput.value) || 0);
+            });
+
+            // Update the global store
+            chartDataStore.labels = newLabels;
+            chartDataStore.data = newData;
+
+            // Ensure percentages sum to 100% (optional, but good practice for pie charts)
+            const sum = newData.reduce((acc, val) => acc + val, 0);
+            if (sum !== 100 && sum !== 0) {
+                 // Distribute the difference proportionally or just normalize
+                 const multiplier = 100 / sum;
+                 chartDataStore.data = chartDataStore.data.map(val => parseFloat((val * multiplier).toFixed(1)));
+                 // Re-populate table to show normalized values
+                 populateTable();
+            }
+
+            // Re-render the chart
+            renderChart();
+        }
+
+        /**
+         * Reads color pickers and updates the chart
+         */
+        function updateChartColors() {
+            chartDataStore.colors[0] = document.getElementById('color0').value;
+            chartDataStore.colors[1] = document.getElementById('color1').value;
+            chartDataStore.colors[2] = document.getElementById('color2').value;
+            
+            // Re-render the chart to apply new colors
+            renderChart();
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Populate the interactive elements
+            populateTable();
+
+            // 2. Set up event listeners for color pickers
+            document.getElementById('color0').addEventListener('input', updateChartColors);
+            document.getElementById('color1').addEventListener('input', updateChartColors);
+            document.getElementById('color2').addEventListener('input', updateChartColors);
+
+            // 3. Initial render
+            renderChart();
+        });
+
+    </script>
+</body>
+</html>

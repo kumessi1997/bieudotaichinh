@@ -206,16 +206,7 @@
                     yAxisID: 'y1',
                     order: 1, // Render order: top (on bars)
                     datalabels: {
-                        anchor: 'end', // Position label at the end of the point
-                        align: 'end',   // Align to the end of the point
-                        offset: function(context) { // Adjust offset based on positive/negative growth
-                            return context.dataset.data[context.dataIndex] < 0 ? -12 : 12; // Adjust for negative values
-                        },
-                        color: currentGrowthLineColor,
-                        formatter: function(value) {
-                            return value !== null ? value + '%' : ''; // Add % sign if value exists
-                        },
-                        font: { size: 12, weight: 'bold' }
+                        display: false // Hide numbers, keep triangles visible
                     }
                 }
             ]

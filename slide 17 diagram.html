@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Agreement Diagram</title>
+    
+    <!-- 1. Import Google Font "Open Sans" -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 2. Basic Setup & Font */
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 3. Diagram Container - The CSS Grid */
+        .diagram-container {
+            display: grid;
+            /* We use a 16-col grid for fine-grained placement */
+            grid-template-columns: repeat(16, minmax(0, 1fr));
+            /* We use 16 rows, each 45px high, plus some taller ones */
+            grid-template-rows: 
+                25px repeat(3, 45px) 
+                25px repeat(7, 45px) 
+                25px repeat(2, 45px) 25px;
+            width: 100%;
+            max-width: 1500px;
+            margin: 0 auto;
+            position: relative;
+            gap: 4px;
+        }
+
+        /* 4. Country Item Styling */
+        .country {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 10; /* Countries are on top of boxes */
+            font-size: 12px;
+            line-height: 1.4;
+            padding: 4px;
+            border-radius: 6px;
+        }
+
+        .country img {
+            width: 40px;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        /* 5. Trade Agreement Box Styling */
+        .box {
+            border-width: 3px;
+            border-style: solid;
+            border-radius: 12px;
+            z-index: 5; /* Boxes are behind countries */
+            position: relative; /* For label placement */
+            padding: 20px;
+        }
+
+        .box .label {
+            position: absolute;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 0 5px;
+            background-color: #f8f9fa; /* Match body bg to "cut" the border */
+        }
+
+        /* 6. Specific Box Styles (Colors & Placement) */
+        
+        /* RCEP (Grey) */
+        .box-rcep {
+            border-color: #9A9A9A;
+            grid-column: 1 / 10;
+            grid-row: 2 / 14;
+        }
+        .box-rcep .label { color: #9A9A9A; top: -11px; left: 15px; }
+        
+        /* ASEAN (Green) */
+        .box-asean {
+            border-color: #006A4E;
+            grid-column: 3 / 9;
+            grid-row: 4 / 10;
+        }
+        .box-asean .label { color: #006A4E; top: 10px; left: 10px; }
+        
+        /* ASEAN4 (Blue) */
+        .box-asean4 {
+            border-color: #0038A8;
+            grid-column: 4 / 9;
+            grid-row: 4 / 8;
+        }
+        .box-asean4 .label { color: #0038A8; top: -11px; left: 15px; }
+
+        /* VKFTA (Brown) */
+        .box-vkfta {
+            border-color: #8B4513;
+            grid-column: 1 / 6;
+            grid-row: 6 / 9;
+        }
+        .box-vkfta .label { color: #8B4513; top: 10px; left: 10px; }
+        
+        /* EVFTA (Dark Blue) */
+        .box-evfta {
+            border-color: #003399;
+            grid-column: 5 / 7;
+            grid-row: 7 / 16;
+        }
+        .box-evfta .label { color: #003399; top: -11px; left: 15px; }
+        
+        /* VN-EAEUFTA (Yellow) */
+        .box-vn-eaeufta {
+            border-color: #E8B400;
+            grid-column: 4 / 13;
+            grid-row: 1 / 5;
+        }
+        .box-vn-eaeufta .label { color: #E8B400; top: 10px; right: 10px; }
+
+        /* CPTPP (Red) */
+        .box-cptpp {
+            border-color: #D7141A;
+            grid-column: 5 / 16;
+            grid-row: 6 / 13;
+        }
+        .box-cptpp .label { color: #D7141A; top: 10px; right: 10px; }
+
+        /* VCFTA (Dark Red) */
+        .box-vcfta {
+            border-color: #B22222;
+            grid-column: 12 / 16;
+            grid-row: 5 / 9;
+        }
+        .box-vcfta .label { color: #B22222; top: -11px; left: 15px; }
+        
+        /* 7. Country Placement */
+        /* Each country is placed in its specific cell */
+        #c-kyrgyzstan   { grid-column: 4 / 5; grid-row: 3 / 4; }
+        #c-kazakhstan   { grid-column: 5 / 6; grid-row: 3 / 4; }
+        #c-armenia      { grid-column: 6 / 7; grid-row: 3 / 4; }
+        #c-belarus      { grid-column: 7 / 8; grid-row: 3 / 4; }
+        #c-russia       { grid-column: 8 / 9; grid-row: 3 / 4; }
+        
+        #c-cambodia     { grid-column: 3 / 4; grid-row: 5 / 6; }
+        #c-philippines  { grid-column: 4 / 5; grid-row: 5 / 6; }
+        #c-indonesia    { grid-column: 5 / 6; grid-row: 5 / 6; }
+        #c-thailand     { grid-column: 6 / 7; grid-row: 5 / 6; }
+
+        #c-skorea       { grid-column: 2 / 3; grid-row: 7 / 8; }
+        #c-laos         { grid-column: 4 / 5; grid-row: 7 / 8; }
+        
+        /* VIETNAM */
+        #c-vietnam { 
+            grid-column: 5 / 6; 
+            grid-row: 7 / 8; 
+            z-index: 99; /* Highest Z-index */
+        }
+        
+        #c-singapore    { grid-column: 7 / 8; grid-row: 7 / 8; }
+        #c-brunei       { grid-column: 8 / 9; grid-row: 7 / 8; }
+        #c-malaysia     { grid-column: 9 / 10; grid-row: 7 / 8; }
+        #c-chile        { grid-column: 12 / 13; grid-row: 7 / 8; }
+        #c-mexico       { grid-column: 14 / 15; grid-row: 7 / 8; }
+        #c-canada-v     { grid-column: 15 / 16; grid-row: 7 / 8; }
+        
+        #c-myanmar-1    { grid-column: 3 / 4; grid-row: 9 / 10; }
+        #c-myanmar-2    { grid-column: 3 / 4; grid-row: 11 / 12; }
+        
+        #c-japan        { grid-column: 8 / 9; grid-row: 9 / 10; }
+        #c-nz           { grid-column: 9 / 10; grid-row: 9 / 10; }
+        #c-australia    { grid-column: 10 / 11; grid-row: 9 / 10; }
+        #c-peru         { grid-column: 12 / 13; grid-row: 9 / 10; }
+
+        #c-china        { grid-column: 8 / 9; grid-row: 11 / 12; }
+        #c-hk           { grid-column: 9 / 10; grid-row: 11 / 12; }
+
+        #c-eu           { grid-column: 5 / 6; grid-row: 15 / 16; }
+
+        /* 8. Vietnam Highlight Animation */
+        #c-vietnam {
+            /* Add a gold-ish pulse */
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+                background-color: rgba(255, 215, 0, 0.1);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+                background-color: rgba(255, 215, 0, 0.2);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+                background-color: rgba(255, 215, 0, 0.1);
+            }
+        }
+        
+        /* 9. "In Negotiation" Section */
+        .negotiation-section {
+            margin-top: 2rem;
+            border-top: 2px solid #ccc;
+            padding-top: 1.5rem;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .negotiation-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin: 0;
+            padding-right: 1.5rem;
+            border-right: 1px solid #ddd;
+        }
+        
+        .negotiation-items {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        /* Styling for negotiation items (no grid needed) */
+        .neg-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+        }
+        .neg-item img, .neg-item .flag-placeholder {
+            width: 40px;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .flag-placeholder {
+            height: 27px; /* approx height of 40w flag */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            color: #888;
+            background: #f0f0f0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Vietnam's Trade Agreements</h1>
+
+    <!-- 
+        The main diagram container.
+        Items are placed using CSS Grid (see styles).
+    -->
+    <div class="diagram-container">
+        <!-- Trade Agreement Boxes -->
+        <div class="box box-rcep"><span class="label">RCEP</span></div>
+        <div class="box box-asean"><span class="label">ASEAN</span></div>
+        <div class="box box-asean4"><span class="label">ASEAN<sup>4</sup></span></div>
+        <div class="box box-vkfta"><span class="label">VKFTA</span></div>
+        <div class="box box-evfta"><span class="label">EVFTA</span></div>
+        <div class="box box-vn-eaeufta"><span class="label">VN-EAEUFTA</span></div>
+        <div class="box box-cptpp"><span class="label">CPTPP</span></div>
+        <div class="box box-vcfta"><span class="label">VCFTA</span></div>
+
+        <!-- Country Items -->
+        <!-- We use flag-cdn PNGs (w40 = 40px width) -->
+        <div class="country" id="c-kyrgyzstan">
+            <img src="https://flagcdn.com/w40/kg.png" alt="Kyrgyzstan Flag">
+            <span>Kyrgyzstan</span>
+        </div>
+        <div class="country" id="c-kazakhstan">
+            <img src="https://flagcdn.com/w40/kz.png" alt="Kazakhstan Flag">
+            <span>Kazakhstan</span>
+        </div>
+        <div class="country" id="c-armenia">
+            <img src="https://flagcdn.com/w40/am.png" alt="Armenia Flag">
+            <span>Armenia</span>
+        </div>
+        <div class="country" id="c-belarus">
+            <img src="https://flagcdn.com/w40/by.png" alt="Belarus Flag">
+            <span>Belarus</span>
+        </div>
+        <div class="country" id="c-russia">
+            <img src="https://flagcdn.com/w40/ru.png" alt="Russia Flag">
+            <span>Russia</span>
+        </div>
+        <div class="country" id="c-cambodia">
+            <img src="https://flagcdn.com/w40/kh.png" alt="Cambodia Flag">
+            <span>Cambodia</span>
+        </div>
+        <div class="country" id="c-philippines">
+            <img src="https://flagcdn.com/w40/ph.png" alt="Philippines Flag">
+            <span>Philippines</span>
+        </div>
+        <div class="country" id="c-indonesia">
+            <img src="https://flagcdn.com/w40/id.png" alt="Indonesia Flag">
+            <span>Indonesia</span>
+        </div>
+        <div class="country" id="c-thailand">
+            <img src="https://flagcdn.com/w40/th.png" alt="Thailand Flag">
+            <span>Thailand</span>
+        </div>
+        <div class="country" id="c-skorea">
+            <img src="https://flagcdn.com/w40/kr.png" alt="South Korea Flag">
+            <span>South Korea</span>
+        </div>
+        <div class="country" id="c-laos">
+            <img src="https://flagcdn.com/w40/la.png" alt="Laos Flag">
+            <span>Laos</span>
+        </div>
+        
+        <!-- VIETNAM (Highlighted) -->
+        <div class="country" id="c-vietnam">
+            <img src="https://flagcdn.com/w40/vn.png" alt="Vietnam Flag">
+            <span>VIETNAM</span>
+        </div>
+        
+        <div class="country" id="c-singapore">
+            <img src="https://flagcdn.com/w40/sg.png" alt="Singapore Flag">
+            <span>Singapore</span>
+        </div>
+        <div class="country" id="c-brunei">
+            <img src="https://flagcdn.com/w40/bn.png" alt="Brunei Flag">
+            <span>Brunei</span>
+        </div>
+        <div class="country" id="c-malaysia">
+            <img src="https://flagcdn.com/w40/my.png" alt="Malaysia Flag">
+            <span>Malaysia</span>
+        </div>
+        <div class="country" id="c-chile">
+            <img src="https://flagcdn.com/w40/cl.png" alt="Chile Flag">
+            <span>Chile</span>
+        </div>
+        <div class="country" id="c-mexico">
+            <img src="https://flagcdn.com/w40/mx.png" alt="Mexico Flag">
+            <span>Mexico</span>
+        </div>
+        <div class="country" id="c-canada-v">
+            <img src="https://flagcdn.com/w40/ca.png" alt="Canada Flag">
+            <span>Canada</span>
+        </div>
+        <div class="country" id="c-myanmar-1">
+            <img src="https://flagcdn.com/w40/mm.png" alt="Myanmar Flag">
+            <span>Myanmar</span>
+        </div>
+        <div class="country" id="c-myanmar-2">
+            <img src="https://flagcdn.com/w40/mm.png" alt="Myanmar Flag">
+            <span>Myanmar</span>
+        </div>
+        <div class="country" id="c-japan">
+            <img src="https://flagcdn.com/w40/jp.png" alt="Japan Flag">
+            <span>Japan</span>
+        </div>
+        <div class="country" id="c-nz">
+            <img src="https://flagcdn.com/w40/nz.png" alt="New Zealand Flag">
+            <span>New Zealand</span>
+        </div>
+        <div class="country" id="c-australia">
+            <img src="https://flagcdn.com/w40/au.png" alt="Australia Flag">
+            <span>Australia</span>
+        </div>
+        <div class="country" id="c-peru">
+            <img src="https://flagcdn.com/w40/pe.png" alt="Peru Flag">
+            <span>Peru</span>
+        </div>
+        <div class="country" id="c-china">
+            <img src="https://flagcdn.com/w40/cn.png" alt="Mainland China Flag">
+            <span>Mainland China</span>
+        </div>
+        <div class="country" id="c-hk">
+            <img src="https://flagcdn.com/w40/hk.png" alt="Hong Kong Flag">
+            <span>Hong Kong</span>
+        </div>
+        <div class="country" id="c-eu">
+            <img src="https://flagcdn.com/w40/eu.png" alt="EU Flag">
+            <span>EU</span>
+        </div>
+    </div>
+    
+    <!-- "In Negotiation" Section -->
+    <div class="negotiation-section">
+        <h3>In negotiation</h3>
+        <div class="negotiation-items">
+            <div class="neg-item">
+                <img src="https://flagcdn.com/w40/ae.png" alt="UAE Flag">
+                <span>UAE</span>
+            </div>
+            <div class="neg-item">
+                <img src="https://flagcdn.com/w40/ca.png" alt="Canada Flag">
+                <span>Canada</span>
+            </div>
+            <div class="neg-item">
+                <img src="https://flagcdn.com/w40/il.png" alt="Israel Flag">
+                <span>Israel</span>
+            </div>
+            <div class="neg-item">
+                <!-- EFTA flag is not in the CDN, so we use a placeholder -->
+                <div class="flag-placeholder">EFTA</div>
+                <span>EFTA</span>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

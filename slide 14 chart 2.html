@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Stacked Column Chart</title>
+    
+    <!-- 1. Import Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Import Google Font "Open Sans" -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 3. Import Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- 4. Custom Styles -->
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f4f7f6; /* A very light, neutral green-gray */
+        }
+        
+        /* Style for the table inputs for a cleaner look */
+        .data-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #D1D5DB; /* gray-300 */
+            border-radius: 6px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            text-align: right;
+            -moz-appearance: textfield; /* Hide arrows for Firefox */
+        }
+        .data-input::-webkit-outer-spin-button,
+        .data-input::-webkit-inner-spin-button {
+            -webkit-appearance: none; /* Hide arrows for Chrome, Safari */
+            margin: 0;
+        }
+        .data-input:focus {
+            outline: none;
+            border-color: #3B82F6; /* blue-500 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Custom style for color picker input */
+        .color-input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 48px; /* 3rem */
+            height: 48px;
+            padding: 0;
+            border: none;
+            border-radius: 8px; /* Slightly more rounded */
+            cursor: pointer;
+            border: 2px solid rgba(0,0,0,0.1); /* Subtle border */
+        }
+        .color-input::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-input::-webkit-color-swatch {
+            border: none;
+            border-radius: 6px; /* Match parent's rounding */
+        }
+        .color-input::-moz-color-swatch {
+            border: none;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body class="text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-lg">
+
+        <h1 class="text-2xl md:text-3xl font-bold text-center text-[#071C2C] mb-8">
+            PDPVIII Target Analysis
+        </h1>
+
+        <!-- Chart Canvas -->
+        <div class="w-full mb-8 md:mb-12">
+            <!-- Added a container to help with responsiveness if needed -->
+            <div class="relative max-w-4xl mx-auto">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Controls and Data Tables -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            
+            <!-- Column 1: Category & Color Settings -->
+            <div class="lg:col-span-2">
+                <h2 class="text-xl font-bold text-[#071C2C] mb-4">Category Settings</h2>
+                <p class="text-sm text-gray-600 mb-4">
+                    Click the color box to change the color for that category in the chart.
+                </p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Color
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Category
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="category-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Category rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Column 2: Data Table -->
+            <div class="lg:col-span-3">
+                <h2 class="text-xl font-bold text-[#071C2C] mb-4">Edit Chart Data</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Category
+                                </th>
+                                <!-- Chart labels (years) will be headers -->
+                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    2023
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    2030
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    2050
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Data rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. INITIAL DATA ---
+            // Based on the image, data is structured by categories (datasets)
+            // and years (labels).
+            const chartLabels = ['2023', '2030', '2050'];
+            
+            const chartData = {
+                labels: chartLabels,
+                datasets: [
+                    {
+                        label: 'Ammonia-fired/Waste to energy',
+                        data: [10, 15, 120],
+                        backgroundColor: '#8B7053',
+                    },
+                    {
+                        label: 'Solar, Wind, Hydro, Biomass',
+                        data: [15, 30, 150],
+                        backgroundColor: '#071C2C',
+                    },
+                    {
+                        label: 'Others',
+                        data: [5, 10, 20],
+                        backgroundColor: '#58595B',
+                    },
+                    {
+                        label: 'Coal, Gas, LNG, Import',
+                        data: [50.6, 95.5, 200], // Values to match totals in image
+                        backgroundColor: '#B0B0B0', // Added a 4th color
+                    }
+                ]
+            };
+            
+            let myChart;
+
+            // --- 2. CREATE AND POPULATE TABLES ---
+            function populateTables() {
+                const categoryTableBody = document.getElementById('category-table-body');
+                const dataTableBody = document.getElementById('data-table-body');
+                
+                categoryTableBody.innerHTML = ''; // Clear existing rows
+                dataTableBody.innerHTML = ''; // Clear existing rows
+
+                chartData.datasets.forEach((dataset, datasetIndex) => {
+                    
+                    // --- Create Category Table Row ---
+                    const categoryRow = document.createElement('tr');
+                    
+                    // Color Picker Cell
+                    const cellColor = document.createElement('td');
+                    cellColor.className = 'px-4 py-3 whitespace-nowrap';
+                    cellColor.innerHTML = `<input 
+                        type="color" 
+                        class="color-input" 
+                        data-dataset="${datasetIndex}" 
+                        value="${dataset.backgroundColor}">`;
+                    
+                    // Category Name Cell
+                    const cellCatName = document.createElement('td');
+                    cellCatName.className = 'px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900';
+                    cellCatName.textContent = dataset.label;
+                    
+                    categoryRow.appendChild(cellColor);
+                    categoryRow.appendChild(cellCatName);
+                    categoryTableBody.appendChild(categoryRow);
+
+                    // --- Create Data Table Row ---
+                    const dataRow = document.createElement('tr');
+                    
+                    // Header cell for category name
+                    const cellDataHeader = document.createElement('td');
+                    cellDataHeader.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900';
+                    cellDataHeader.textContent = dataset.label;
+                    dataRow.appendChild(cellDataHeader);
+
+                    // Input cells for each label (year)
+                    chartData.labels.forEach((label, labelIndex) => {
+                        const cellData = document.createElement('td');
+                        cellData.className = 'px-6 py-4 whitespace-nowrap text-sm';
+                        cellData.innerHTML = `<input 
+                            type="number" 
+                            step="0.1" 
+                            class="data-input" 
+                            data-dataset="${datasetIndex}" 
+                            data-index="${labelIndex}" 
+                            value="${dataset.data[labelIndex]}">`;
+                        dataRow.appendChild(cellData);
+                    });
+                    
+                    dataTableBody.appendChild(dataRow);
+                });
+
+                // Add event listeners
+                categoryTableBody.addEventListener('input', updateChartColor);
+                dataTableBody.addEventListener('change', updateChartData);
+            }
+
+            // --- 3. CREATE CHART ---
+            function createChart() {
+                const ctx = document.getElementById('myChart').getContext('2d');
+                
+                Chart.defaults.font.family = 'Open Sans';
+                Chart.defaults.color = '#58595B';
+                
+                myChart = new Chart(ctx, {
+                    type: 'bar', // This will be a column chart
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false, // Legend is handled by our tables
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    // Custom tooltip to show sum
+                                    footer: (tooltipItems) => {
+                                        let sum = 0;
+                                        tooltipItems.forEach(function(tooltipItem) {
+                                            sum += tooltipItem.parsed.y;
+                                        });
+                                        return 'Total: ' + sum.toFixed(1);
+                                    },
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                stacked: true, // Stack the Y-axis
+                                beginAtZero: true,
+                                grid: {
+                                    drawBorder: false,
+                                },
+                                ticks: {
+                                    callback: (value) => value // Simple value display
+                                }
+                            },
+                            x: {
+                                stacked: true, // Stack the X-axis
+                                grid: {
+                                    display: false,
+                                }
+                            }
+                        },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    }
+                });
+            }
+
+            // --- 4. EVENT HANDLERS ---
+            
+            // Update chart when table data changes
+            function updateChartData(event) {
+                if (event.target.classList.contains('data-input')) {
+                    const datasetIndex = event.target.dataset.dataset;
+                    const dataIndex = event.target.dataset.index;
+                    const newValue = parseFloat(event.target.value);
+
+                    if (!isNaN(newValue)) {
+                        chartData.datasets[datasetIndex].data[dataIndex] = newValue;
+                        myChart.update();
+                    }
+                }
+            }
+
+            // Update chart when color pickers change
+            function updateChartColor(event) {
+                if (event.target.classList.contains('color-input')) {
+                    const datasetIndex = event.target.dataset.dataset;
+                    const newColor = event.target.value;
+
+                    chartData.datasets[datasetIndex].backgroundColor = newColor;
+                    myChart.update();
+                }
+            }
+
+            // --- 5. INITIALIZE APP ---
+            populateTables();
+            createChart();
+        });
+    </script>
+
+</body>
+</html>
