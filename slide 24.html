@@ -193,11 +193,9 @@
                 myChart.destroy(); // Clear old chart
             }
 
-            // Reverse data for display (bottom-up in image)
-            const reversedData = [...chartDataStore].reverse();
-
-            const labels = reversedData.map(d => d.label);
-            const values = reversedData.map(d => d.value);
+            // Show data from highest to lowest directly
+            const labels = chartDataStore.map(d => d.label);
+            const values = chartDataStore.map(d => d.value);
 
             const colorPositive = document.getElementById('colorPositive').value;
             const colorNegative = document.getElementById('colorNegative').value;
@@ -262,7 +260,7 @@
                         // Datalabels plugin configuration
                         datalabels: {
                             color: gridColor,
-                            anchor: 'end',
+                            anchor: (context) => (context.dataset.data[context.dataIndex] >= 0 ? 'end' : 'start'),
                             // Align text to the right (positive) or left (negative)
                             align: (context) => (context.dataset.data[context.dataIndex] >= 0 ? 'right' : 'left'),
                             padding: {

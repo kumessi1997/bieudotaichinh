@@ -4,20 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ETF Fund Allocation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Open Sans', Arial, sans-serif;
             margin: 20px;
             background-color: #f4f4f4;
             color: #333;
         }
+        .controls input[type="range"] {
+            width: 150px;
+        }
+        .size-display {
+            margin-left: 8px;
+            font-weight: bold;
+        }
         .container {
-            max-width: 1200px;
+            max-width: 95vw;
             margin: 0 auto;
             background-color: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
         }
         table {
             width: 100%;
@@ -115,6 +124,20 @@
                 <label for="borderColor">Border Color:</label>
                 <input type="color" id="borderColor" value="#58595B">
             </div>
+            <div class="color-group">
+                <label for="tableWidth">Table Width (%):</label>
+                <input type="range" id="tableWidth" min="50" max="130" value="100">
+                <span class="size-display" id="tableWidthValue">100%</span>
+            </div>
+            <div class="color-group">
+                <label for="tableHeight">Table Height (px):</label>
+                <input type="range" id="tableHeight" min="300" max="900" value="450">
+                <span class="size-display" id="tableHeightValue">450px</span>
+            </div>
+            <div class="color-group">
+                <label for="maintainAspect">Lock 9:5 Ratio:</label>
+                <input type="checkbox" id="maintainAspect" checked>
+            </div>
         </div>
 
         <table id="dataTable">
@@ -183,14 +206,35 @@
 
     <script>
         const root = document.documentElement;
+        const dataTable = document.getElementById('dataTable');
         const headerBgColorInput = document.getElementById('headerBgColor');
         const headerTextColorInput = document.getElementById('headerTextColor');
         const evenRowBgColorInput = document.getElementById('evenRowBgColor');
         const totalRowBgColorInput = document.getElementById('totalRowBgColor');
         const totalRowTextColorInput = document.getElementById('totalRowTextColor');
         const borderColorInput = document.getElementById('borderColor');
+        const tableWidthInput = document.getElementById('tableWidth');
+        const tableHeightInput = document.getElementById('tableHeight');
+        const tableWidthValue = document.getElementById('tableWidthValue');
+        const tableHeightValue = document.getElementById('tableHeightValue');
+        const maintainAspectInput = document.getElementById('maintainAspect');
+        const ASPECT_RATIO = 5 / 9;
 
-        function applyColors() {
+        function syncHeightToRatio() {
+            const hostWidth = dataTable.parentElement.clientWidth || dataTable.offsetWidth;
+            const widthPercent = Number(tableWidthInput.value) / 100;
+            const widthPx = hostWidth * widthPercent;
+            const calculatedHeight = Math.round(widthPx * ASPECT_RATIO);
+            const minHeight = Number(tableHeightInput.min);
+            const maxHeight = Number(tableHeightInput.max);
+            tableHeightInput.value = Math.min(Math.max(calculatedHeight, minHeight), maxHeight);
+        }
+
+        function applyStyles() {
+            if (maintainAspectInput.checked) {
+                syncHeightToRatio();
+            }
+
             root.style.setProperty('--header-bg-color', headerBgColorInput.value);
             root.style.setProperty('--header-text-color', headerTextColorInput.value);
             root.style.setProperty('--even-row-bg-color', evenRowBgColorInput.value);
@@ -208,18 +252,33 @@
             if (totalRow) {
                 totalRow.style.color = totalRowTextColorInput.value;
             }
+
+            dataTable.style.width = `${tableWidthInput.value}%`;
+            dataTable.style.height = `${tableHeightInput.value}px`;
+            dataTable.style.display = 'block';
+            dataTable.style.overflowY = 'auto';
+
+            tableWidthValue.textContent = `${tableWidthInput.value}%`;
+            tableHeightValue.textContent = `${tableHeightInput.value}px`;
+            tableHeightInput.disabled = maintainAspectInput.checked;
         }
 
         // Apply initial colors on load
-        applyColors();
+        applyStyles();
 
         // Add event listeners to color pickers
-        headerBgColorInput.addEventListener('input', applyColors);
-        headerTextColorInput.addEventListener('input', applyColors);
-        evenRowBgColorInput.addEventListener('input', applyColors);
-        totalRowBgColorInput.addEventListener('input', applyColors);
-        totalRowTextColorInput.addEventListener('input', applyColors);
-        borderColorInput.addEventListener('input', applyColors);
+        headerBgColorInput.addEventListener('input', applyStyles);
+        headerTextColorInput.addEventListener('input', applyStyles);
+        evenRowBgColorInput.addEventListener('input', applyStyles);
+        totalRowBgColorInput.addEventListener('input', applyStyles);
+        totalRowTextColorInput.addEventListener('input', applyStyles);
+        borderColorInput.addEventListener('input', applyStyles);
+        tableWidthInput.addEventListener('input', applyStyles);
+        tableHeightInput.addEventListener('input', applyStyles);
+        maintainAspectInput.addEventListener('change', () => {
+            tableHeightInput.disabled = maintainAspectInput.checked;
+            applyStyles();
+        });
     </script>
 </body>
 </html>

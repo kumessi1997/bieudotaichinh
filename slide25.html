@@ -169,6 +169,91 @@
         }
 
         /**
+         * Creates a plugin to display key point values on the chart
+         */
+        function createKeyPointLabelPlugin(chartData, colors) {
+            return {
+                id: 'keyPointLabels',
+                afterDatasetsDraw: (chart) => {
+                    const ctx = chart.ctx;
+                    const meta = chart.getDatasetMeta(0);
+                    const chartArea = chart.chartArea;
+
+                    ctx.save();
+                    ctx.font = '12px Inter';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillStyle = colors.keyPoint || colors.text;
+
+                    // Get all key point indices for edge detection
+                    const keyPointIndices = chartData
+                        .map((item, index) => item.isKey && item.value !== null ? index : -1)
+                        .filter(index => index !== -1);
+
+                    chartData.forEach((item, index) => {
+                        // Only draw labels for key points with valid values
+                        if (item.isKey && item.value !== null && meta.data[index]) {
+                            const point = meta.data[index];
+                            const isFirst = index === keyPointIndices[0];
+                            const isLast = index === keyPointIndices[keyPointIndices.length - 1];
+                            
+                            // Format the value to 2 decimal places
+                            const valueText = item.value.toFixed(2);
+                            
+                            // Measure text width to check bounds
+                            const metrics = ctx.measureText(valueText);
+                            const textWidth = metrics.width;
+                            const textHeight = 12;
+                            
+                            // Calculate position with padding
+                            let x = point.x;
+                            let textAlign = 'center';
+                            
+                            // Adjust alignment for edge points
+                            if (isFirst && (x - textWidth / 2) < chartArea.left) {
+                                textAlign = 'left';
+                                x = Math.max(point.x, chartArea.left + 2);
+                            } else if (isLast && (x + textWidth / 2) > chartArea.right) {
+                                textAlign = 'right';
+                                x = Math.min(point.x, chartArea.right - 2);
+                            }
+                            
+                            const y = point.y - 12; // Position text 12px above the point
+                            
+                            // Check if label would be clipped at top
+                            if (y < chartArea.top) {
+                                // If clipped at top, show below the point
+                                const adjustedY = point.y + textHeight + 4;
+                                ctx.textAlign = textAlign;
+                                ctx.textBaseline = 'top';
+                                
+                                // Draw the text with a slight shadow for better visibility
+                                ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+                                ctx.shadowBlur = 4;
+                                ctx.shadowOffsetX = 0;
+                                ctx.shadowOffsetY = 0;
+                                ctx.fillText(valueText, x, adjustedY);
+                                ctx.shadowBlur = 0;
+                            } else {
+                                ctx.textAlign = textAlign;
+                                ctx.textBaseline = 'bottom';
+                                
+                                // Draw the text with a slight shadow for better visibility
+                                ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+                                ctx.shadowBlur = 4;
+                                ctx.shadowOffsetX = 0;
+                                ctx.shadowOffsetY = 0;
+                                ctx.fillText(valueText, x, y);
+                                ctx.shadowBlur = 0;
+                            }
+                        }
+                    });
+
+                    ctx.restore();
+                }
+            };
+        }
+
+        /**
          * Creates or updates the chart instance
          */
         function createChart(labels, values, pointRadii, pointColors, colors) {
@@ -176,8 +261,12 @@
                 myChart.destroy();
             }
             
+            // Register the key point label plugin
+            const keyPointLabelPlugin = createKeyPointLabelPlugin(chartData, colors);
+            
             myChart = new Chart(ctx, {
                 type: 'line',
+                plugins: [keyPointLabelPlugin],
                 data: {
                     labels: labels,
                     datasets: [{
@@ -197,6 +286,14 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 30,
+                            right: 40,
+                            bottom: 20,
+                            left: 40
+                        }
+                    },
                     plugins: {
                         legend: {
                             display: true,
@@ -283,7 +380,7 @@
             // Update global data
             chartData = newChartData;
             
-            // Re-process data and update chart
+            // Re-process data and recreate chart with new data
             const colors = {
                 line: lineColorPicker.value,
                 keyPoint: keyPointColorPicker.value,
@@ -291,13 +388,8 @@
             };
             const { labels, values, pointRadii, pointColors } = processData(chartData, colors);
             
-            // Update chart data
-            myChart.data.labels = labels;
-            myChart.data.datasets[0].data = values;
-            myChart.data.datasets[0].pointRadius = pointRadii;
-            myChart.data.datasets[0].pointBackgroundColor = pointColors;
-            myChart.data.datasets[0].pointBorderColor = pointColors;
-            myChart.update();
+            // Recreate chart to update the plugin with new data
+            createChart(labels, values, pointRadii, pointColors, colors);
         }
 
         /**
@@ -310,21 +402,11 @@
                 text: textColorPicker.value
             };
 
-            // Re-process point colors
-            const { pointColors } = processData(chartData, colors);
+            // Re-process data to get point colors
+            const { labels, values, pointRadii, pointColors } = processData(chartData, colors);
             
-            // Update dataset colors
-            myChart.data.datasets[0].borderColor = colors.line;
-            myChart.data.datasets[0].backgroundColor = colors.line;
-            myChart.data.datasets[0].pointBackgroundColor = pointColors;
-            myChart.data.datasets[0].pointBorderColor = pointColors;
-
-            // Update scale and legend colors
-            myChart.options.plugins.legend.labels.color = colors.text;
-            myChart.options.scales.x.ticks.color = colors.text;
-            myChart.options.scales.y.ticks.color = colors.text;
-            
-            myChart.update();
+            // Recreate chart to update the plugin with new colors
+            createChart(labels, values, pointRadii, pointColors, colors);
         }
 
         // --- 4. INITIALIZATION ---

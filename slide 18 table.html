@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Đầu tư Nước ngoài</title>
+    <style>
+        :root {
+            /* 1. Các biến CSS cho màu sắc. 
+               Chúng sẽ được cập nhật bởi JavaScript.
+               Màu mặc định được lấy từ yêu cầu của bạn.
+            */
+            --header-bg-color: #8B7053;
+            --header-text-color: #FFFFFF;
+            --row-even-bg-color: #f7f7f7;
+            --row-odd-bg-color: #FFFFFF;
+            --data-text-color: #071C2C;
+            --border-color: #58595B;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: var(--data-text-color); /* Áp dụng màu dữ liệu cho toàn bộ văn bản */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 2. Bảng điều khiển màu sắc */
+        .controls {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            border: 1px solid #ddd;
+        }
+
+        .color-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-group label {
+            font-size: 0.9em;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .color-group input[type="color"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border: 1px solid #ccc;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            border-radius: 5px;
+            background-color: transparent;
+        }
+        .color-group input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-group input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+         .color-group input[type="color"]::-moz-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+        
+        /* 3. Bảng dữ liệu */
+        .table-wrapper {
+            overflow-x: auto; /* Cho phép cuộn ngang trên màn hình nhỏ */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+            border: 1px solid var(--border-color); /* Đường viền bên ngoài */
+        }
+
+        th, td {
+            padding: 8px 15px;
+            vertical-align: middle;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            border-left: 1px solid var(--border-color);
+        }
+        
+        th:first-child,
+        td:first-child {
+            border-left: none; /* Bỏ đường viền bên trái cho cột đầu tiên */
+        }
+
+        /* Tiêu đề bảng */
+        thead th {
+            background-color: var(--header-bg-color);
+            color: var(--header-text-color);
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* Thân bảng */
+        tbody tr:nth-child(even) {
+            background-color: var(--row-even-bg-color);
+        }
+
+        tbody tr:nth-child(odd) {
+            background-color: var(--row-odd-bg-color);
+        }
+        
+        tbody tr:hover {
+            background-color: #e8f4ff; /* Thêm hiệu ứng hover */
+        }
+
+        tbody td {
+            font-size: 0.95em;
+        }
+
+        /* Căn chỉnh cột giá trị */
+        tbody td:nth-child(3) {
+            text-align: right;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Foreign Investment Projects</h2>
+        
+        <!-- Bảng điều khiển màu sắc -->
+        <div class="controls">
+            <div class="color-group">
+                <label for="headerBgColor">Tiêu đề (Nền):</label>
+                <!-- Giá trị mặc định được đặt từ yêu cầu của bạn -->
+                <input type="color" id="headerBgColor" value="#8B7053">
+            </div>
+            <div class="color-group">
+                <label for="headerTextColor">Tiêu đề (Chữ):</label>
+                <input type="color" id="headerTextColor" value="#FFFFFF">
+            </div>
+             <div class="color-group">
+                <label for="dataTextColor">Văn bản (Dữ liệu):</label>
+                <input type="color" id="dataTextColor" value="#071C2C">
+            </div>
+            <div class="color-group">
+                <label for="borderColor">Đường viền:</label>
+                <input type="color" id="borderColor" value="#58595B">
+            </div>
+            <div class="color-group">
+                <label for="rowEvenColor">Hàng chẵn (Nền):</label>
+                <input type="color" id="rowEvenColor" value="#f7f7f7">
+            </div>
+            <div class="color-group">
+                <label for="rowOddColor">Hàng lẻ (Nền):</label>
+                <input type="color" id="rowOddColor" value="#FFFFFF">
+            </div>
+        </div>
+
+        <!-- Bảng dữ liệu -->
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Country</th>
+                        <th scope="col">Field of operation</th>
+                        <th scope="col">Value (USD Mn)</th>
+                        <th scope="col">Province</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>South Korea</td>
+                        <td>Biodegradable fiber products</td>
+                        <td>730</td>
+                        <td>Ba Ria - Vung Tau</td>
+                    </tr>
+                    <tr>
+                        <td>Taiwan</td>
+                        <td>Electronics</td>
+                        <td>263.7</td>
+                        <td>Quang Ninh</td>
+                    </tr>
+                    <tr>
+                        <td>Taiwan</td>
+                        <td>Electronics</td>
+                        <td>278.2</td>
+                        <td>Quang Ninh</td>
+                    </tr>
+                    <tr>
+                        <td>China</td>
+                        <td>Solar panels</td>
+                        <td>454</td>
+                        <td>Thai Nguyen</td>
+                    </tr>
+                    <tr>
+                        <td>Hong Kong</td>
+                        <td>Electronics</td>
+                        <td>200</td>
+                        <td>Nghe An</td>
+                    </tr>
+                    <tr>
+                        <td>Hong Kong</td>
+                        <td>Monocrystalline silicon products</td>
+                        <td>275</td>
+                        <td>Quang Ninh</td>
+                    </tr>
+                    <tr>
+                        <td>Singapore</td>
+                        <td>Semiconductor IC packaging</td>
+                        <td>1,100</td>
+                        <td>Bac Ninh</td>
+                    </tr>
+                    <tr>
+                        <td>Singapore</td>
+                        <td>Real Estate</td>
+                        <td>700</td>
+                        <td>Hanoi</td>
+                    </tr>
+                    <tr>
+                        <td>Taiwan</td>
+                        <td>Electronics</td>
+                        <td>250</td>
+                        <td>Ba Ria - Vung Tau</td>
+                    </tr>
+                    <tr>
+                        <td>Denmark</td>
+                        <td>Jewelry</td>
+                        <td>150</td>
+                        <td>Binh Duong</td>
+                    </tr>
+                    <tr>
+                        <td>Taiwan</td>
+                        <td>Electronic components</td>
+                        <td>120</td>
+                        <td>Nghe An</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 4. JavaScript để cập nhật màu sắc
+        
+        // Lấy phần tử gốc (root) để thay đổi các biến CSS
+        const root = document.documentElement;
+
+        // Lấy tất cả các ô chọn màu
+        const controls = {
+            headerBgColor: document.getElementById('headerBgColor'),
+            headerTextColor: document.getElementById('headerTextColor'),
+            dataTextColor: document.getElementById('dataTextColor'),
+            borderColor: document.getElementById('borderColor'),
+            rowEvenColor: document.getElementById('rowEvenColor'),
+            rowOddColor: document.getElementById('rowOddColor')
+        };
+
+        // Hàm để áp dụng các màu đã chọn
+        function applyColors() {
+            root.style.setProperty('--header-bg-color', controls.headerBgColor.value);
+            root.style.setProperty('--header-text-color', controls.headerTextColor.value);
+            root.style.setProperty('--data-text-color', controls.dataTextColor.value);
+            root.style.setProperty('--border-color', controls.borderColor.value);
+            root.style.setProperty('--row-even-bg-color', controls.rowEvenColor.value);
+            root.style.setProperty('--row-odd-bg-color', controls.rowOddColor.value);
+        }
+
+        // Thêm trình lắng nghe sự kiện 'input' cho mỗi ô chọn màu
+        // Khi người dùng thay đổi màu, hàm applyColors sẽ được gọi
+        for (let key in controls) {
+            controls[key].addEventListener('input', applyColors);
+        }
+
+        // Áp dụng màu sắc ban đầu khi tải trang (dựa trên giá trị 'value' trong HTML)
+        applyColors();
+    </script>
+</body>
+</html>

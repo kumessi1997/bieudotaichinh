@@ -98,44 +98,25 @@
         // --- HELPER FUNCTIONS ---
 
         /**
-         * Finds the minimum and maximum values from all data cells.
-         * @returns {object} An object { min, max }
-         */
-        function getMinMaxValues() {
-            let min = Infinity;
-            let max = -Infinity;
-            const dataCells = document.querySelectorAll('.data-cell');
-            dataCells.forEach(cell => {
-                const value = parseFloat(cell.textContent);
-                if (!isNaN(value)) {
-                    if (value < min) min = value;
-                    if (value > max) max = value;
-                }
-            });
-            return { min, max };
-        }
-
-        /**
-         * Calculates a heatmap color (red-to-green) for a value.
+         * Applies a manual palette so the default heatmap matches the provided design.
+         * Colors are chosen to mirror the reference image rather than using a pure gradient.
          * @param {number} value - The cell's value.
-         * @param {number} min - The minimum value in the table.
-         * @param {number} max - The maximum value in the table.
-         * @returns {string} An HSL color string.
+         * @returns {string} A HEX color string.
          */
-        function getColorForValue(value, min, max) {
-            if (min === max) {
-                // Handle case where all values are the same
-                return 'hsl(120, 70%, 75%)'; // Default to green
-            }
-            // Normalize value from 0 (min) to 1 (max)
-            const percentage = (value - min) / (max - min);
-            
-            // Map percentage to a hue from 0 (red) to 120 (green)
-            const hue = percentage * 120;
-            const saturation = 70;
-            const lightness = 75; // Keep lightness high for readability
-            
-            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        function getColorForValue(value) {
+            if (isNaN(value)) return '#ffffff';
+
+            const palette = [
+                { max: 0.1, color: '#F24B41' },   // Intense red
+                { max: 0.35, color: '#F77D6F' },  // Medium red
+                { max: 0.6, color: '#F9ADA2' },   // Soft pink
+                { max: 0.9, color: '#E8E8ED' },   // Neutral gray
+                { max: 1.2, color: '#A7D472' },   // Light green
+                { max: 1.5, color: '#74BC45' },   // Medium green
+                { max: Infinity, color: '#4F9F2F' } // Deep green
+            ];
+
+            return palette.find(entry => value <= entry.max)?.color ?? '#ffffff';
         }
 
         /**
@@ -167,7 +148,6 @@
          * Skips cells that have been manually colored.
          */
         function updateAllCellColors() {
-            const { min, max } = getMinMaxValues();
             const dataCells = document.querySelectorAll('.data-cell');
             
             dataCells.forEach(cell => {
@@ -179,7 +159,7 @@
                 const value = parseFloat(cell.textContent);
                 
                 if (!isNaN(value)) {
-                    const color = getColorForValue(value, min, max);
+                    const color = getColorForValue(value);
                     cell.style.backgroundColor = color;
                     cell.style.color = '#000000'; // Always use black text for the heatmap
                 } else {

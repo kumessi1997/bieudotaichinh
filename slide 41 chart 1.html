@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAV/Fund Certificates Growth</title>
+    <!-- 1. Import Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 600;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+        
+        h2 {
+            color: #444;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+            margin-top: 30px;
+        }
+
+        /* Container for the chart */
+        .chart-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+        }
+        
+        /* Main layout for controls and data */
+        .main-controls-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+
+        /* Color Controls Section */
+        .color-controls {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .color-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .color-input-group label {
+            flex-basis: 100px; /* Consistent label width */
+        }
+        
+        .color-input-group input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: 1px solid #ddd;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        /* Data Controls Section */
+        .data-controls {
+            flex: 3;
+            min-width: 500px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Table styles */
+        .table-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        
+        th {
+            background-color: #f9f9f9;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        
+        td input[type="text"],
+        td input[type="number"] {
+            width: 90%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        /* Button styles */
+        button {
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-add {
+            background-color: #28a745;
+        }
+        .btn-add:hover {
+            background-color: #218838;
+        }
+        
+        .btn-delete {
+            background-color: #dc3545;
+            padding: 8px 12px;
+            margin-top: 0;
+        }
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>NAV/fund certificates Growth</h1>
+
+    <div class="chart-container">
+        <canvas id="navChart"></canvas>
+    </div>
+
+    <div class="main-controls-container">
+        
+        <div class="color-controls">
+            <h2>Color Controls</h2>
+            <div class="color-input-group">
+                <label for="bmffColor">BMFF:</label>
+                <input type="color" id="bmffColor" value="#8B7053">
+            </div>
+            <div class="color-input-group">
+                <label for="vnindexColor">VNINDEX:</label>
+                <input type="color" id="vnindexColor" value="#071C2C">
+            </div>
+             <div class="color-input-group">
+                <label for="otherColor">Other:</label>
+                <input type="color" id="otherColor" value="#58595B">
+            </div>
+            <button onclick="updateChartColors()">Apply Colors</button>
+        </div>
+
+        <div class="data-controls">
+            <h2>Data Modification</h2>
+            <div class="table-wrapper">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Label</th>
+                            <th>BMFF (%)</th>
+                            <th>VNINDEX (%)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be injected here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="button-group">
+                <button class="btn-add" onclick="addRow()">Add Row</button>
+                <button onclick="updateChartFromTable()">Update Chart</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 2. Initial Data (from data.json)
+        // I've embedded the JSON data content here for use in this single-file HTML.
+        const rawData = {
+          "BMFF": {
+            "20/2/23": "0,00%", "T2/23": "-0,39%", "T3/23": "1,44%", "T4/23": "2,07%", "T5/23": "4,75%", "T6/23": "7,75%", "T7/23": "10,50%", "T8/23": "11,36%", "T9/23": "8,05%", "T10/23": "0,51%", "T11/23": "3,83%", "T12/23": "7,40%", "T1/24": "10,81%", "T2/24": "18,47%", "T3/24": "22,00%", "T4/24": "15,78%", "T5/24": "23,27%", "T6/24": "22,04%", "T7/24": "22,03%", "T8/24": "24,24%", "T9/24": "26,53%", "T10/24": "24,94%", "T11/24": "24,38%", "T12/24": "27,49%", "T01/25": "27,50%", "T02/25": "32,66%", "T03/25": "35,79%", "T04/25": "26,48%", "T05/25": "36,94%", "T06/25": "41,70%", "T7/25": "50,77%", "T08/25": "64,74%", "T9/25": "61,87%", "T10/25": "59,98%"
+          },
+          "VNINDEX": {
+            "20/2/23": "0,00%", "T2/23": "-5,71%", "T3/23": "-2,03%", "T4/23": "-3,46%", "T5/23": "-1,06%", "T6/23": "3,08%", "T7/23": "12,53%", "T8/23": "12,64%", "T9/23": "6,21%", "T10/23": "-5,38%", "T11/23": "0,68%", "T12/23": "3,98%", "T1/24": "7,11%", "T2/24": "15,28%", "T3/24": "18,17%", "T4/24": "11,30%", "T5/24": "16,11%", "T6/24": "14,60%", "T7/24": "15,17%", "T8/24": "18,15%", "T9/24": "18,52%", "T10/24": "16,36%", "T11/24": "15,07%", "T12/24": "16,57%", "T01/25": "16,41%", "T02/25": "20,12%", "T03/25": "22,62%", "T04/25": "12,85%", "T05/25": "22,63%", "T06/25": "26,63%", "T7/25": "38,22%", "T08/25": "54,69%", "T9/25": "52,94%", "T10/25": "50,92%"
+          }
+        };
+
+        let chartData = []; // This will hold our structured data: [{label, bmff, vnindex}, ...]
+        let navChart; // Global variable for the chart instance
+        const ctx = document.getElementById('navChart').getContext('2d');
+
+        // 3. Helper function to parse the raw JSON data
+        function parseRawData() {
+            const labels = Object.keys(rawData.BMFF);
+            const parsedData = labels.map(label => {
+                const bmffValue = rawData.BMFF[label];
+                const vnindexValue = rawData.VNINDEX[label];
+                
+                return {
+                    label: label,
+                    bmff: parsePercentString(bmffValue),
+                    vnindex: parsePercentString(vnindexValue)
+                };
+            });
+            return parsedData;
+        }
+
+        // Helper to convert strings like "26,53%" to numbers like 26.53
+        function parsePercentString(value) {
+            if (!value) return 0;
+            return parseFloat(value.replace('%', '').replace(',', '.'));
+        }
+
+        // 4. Helper function to process data for the chart
+        function processDataForChart(data) {
+            const labels = data.map(d => d.label);
+            const bmffValues = data.map(d => d.bmff);
+            const vnindexValues = data.map(d => d.vnindex);
+            return { labels, bmffValues, vnindexValues };
+        }
+
+        // 5. Chart Initialization Function
+        function initializeChart() {
+            const { labels, bmffValues, vnindexValues } = processDataForChart(chartData);
+            
+            // Get initial colors from the color pickers
+            const bmffColor = document.getElementById('bmffColor').value;
+            const vnindexColor = document.getElementById('vnindexColor').value;
+
+            navChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'BMFF',
+                            data: bmffValues,
+                            borderColor: bmffColor,
+                            backgroundColor: 'transparent', // No fill
+                            borderWidth: 3, // Thicker line
+                            pointRadius: 2,
+                            pointBackgroundColor: bmffColor,
+                            tension: 0.1 // Slight curve
+                        },
+                        {
+                            label: 'VNINDEX',
+                            data: vnindexValues,
+                            borderColor: vnindexColor,
+                            backgroundColor: 'transparent', // No fill
+                            borderWidth: 3, // Thicker line
+                            pointRadius: 2,
+                            pointBackgroundColor: vnindexColor,
+                            tension: 0.1 // Slight curve
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            ticks: {
+                                // Format Y-axis ticks as percentages
+                                callback: function(value) {
+                                    return value.toFixed(2) + '%';
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                // Show fewer labels on X-axis to avoid crowding
+                                callback: function(val, index) {
+                                    const label = this.getLabelForValue(val);
+                                    // Manually handle the first label
+                                    if (index === 0) return "Thành lập Quỹ"; // As per image
+                                    // Show labels for T2, T5, T8, T11...
+                                    return (index - 1) % 3 === 0 ? label : '';
+                                },
+                                autoSkip: false,
+                                maxRotation: 0,
+                                minRotation: 0,
+                            },
+                            grid: {
+                                display: false // Hide x-axis grid lines
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            align: 'center',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 10
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // 6. Table Management Functions
+        
+        function populateDataTable() {
+            const tableBody = document.querySelector("#dataTable tbody");
+            tableBody.innerHTML = ""; // Clear existing rows
+            
+            chartData.forEach((row, index) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><input type="text" value="${row.label}" onchange="editData(${index}, 'label', this.value)"></td>
+                    <td><input type="number" step="0.01" value="${row.bmff}" onchange="editData(${index}, 'bmff', this.value)"></td>
+                    <td><input type="number" step="0.01" value="${row.vnindex}" onchange="editData(${index}, 'vnindex', this.value)"></td>
+                    <td><button class="btn-delete" onclick="deleteRow(${index})">Delete</button></td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Update the in-memory data array
+        function editData(index, field, value) {
+            chartData[index][field] = (field === 'bmff' || field === 'vnindex') ? parseFloat(value) : value;
+        }
+
+        function addRow() {
+            chartData.push({ label: "New Label", bmff: 0, vnindex: 0 });
+            populateDataTable(); // Repopulate the table
+        }
+
+        function deleteRow(index) {
+            chartData.splice(index, 1); // Remove the row from the data array
+            populateDataTable(); // Repopulate the table
+            updateChartFromTable(); // Update the chart
+        }
+
+        // 7. Chart Update Functions
+        
+        function updateChartFromTable() {
+            const { labels, bmffValues, vnindexValues } = processDataForChart(chartData);
+            
+            navChart.data.labels = labels;
+            navChart.data.datasets[0].data = bmffValues;
+            navChart.data.datasets[1].data = vnindexValues;
+            
+            navChart.update();
+        }
+        
+        function updateChartColors() {
+            const bmffColor = document.getElementById('bmffColor').value;
+            const vnindexColor = document.getElementById('vnindexColor').value;
+            
+            // Update line colors
+            navChart.data.datasets[0].borderColor = bmffColor;
+            navChart.data.datasets[0].pointBackgroundColor = bmffColor;
+            
+            navChart.data.datasets[1].borderColor = vnindexColor;
+            navChart.data.datasets[1].pointBackgroundColor = vnindexColor;
+            
+            navChart.update();
+        }
+
+        // 8. Initial setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            chartData = parseRawData(); // Parse the raw data into our working array
+            populateDataTable();
+            initializeChart();
+        });
+
+    </script>
+</body>
+</html>

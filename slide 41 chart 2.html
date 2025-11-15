@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NAV Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        #chart-container {
+            width: 80%;
+            max-width: 900px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        #controls {
+            margin-bottom: 20px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        #controls label {
+            margin-right: 5px;
+            font-weight: bold;
+        }
+        #controls input[type="color"] {
+            border: none;
+            width: 40px;
+            height: 25px;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+        #data-table-container {
+            width: 80%;
+            max-width: 900px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        td[contenteditable="true"] {
+            background-color: #fffacd; /* Light yellow for editable cells */
+            cursor: text;
+        }
+        td[contenteditable="true"]:focus {
+            outline: 2px solid #8B7053;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #071C2C;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        button:hover {
+            background-color: #58595B;
+        }
+        .add-row-btn {
+            margin-top: 15px;
+            background-color: #58595B;
+        }
+        .add-row-btn:hover {
+             background-color: #071C2C;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>NAV Chart</h1>
+
+    <div id="controls">
+        <label for="color1">Color 1:</label>
+        <input type="color" id="color1" value="#8B7053">
+        <label for="color2">Color 2:</label>
+        <input type="color" id="color2" value="#071C2C">
+        <label for="color3">Color 3:</label>
+        <input type="color" id="color3" value="#58595B">
+        <button onclick="updateChartColors()">Apply Colors</button>
+    </div>
+
+    <div id="chart-container">
+        <canvas id="navChart"></canvas>
+    </div>
+
+    <div id="data-table-container">
+        <h2>Chart Data</h2>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>NAV</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow()">Add Row</button>
+    </div>
+
+    <script>
+        const chartData = [
+            { date: 'Inception', nav: 50000000 },
+            { date: 'Feb-23', nav: 90000000 },
+            { date: 'Mar-23', nav: 95000000 },
+            { date: 'Apr-23', nav: 97000000 },
+            { date: 'May-23', nav: 100000000 },
+            { date: 'Jun-23', nav: 105000000 },
+            { date: 'Jul-23', nav: 110000000 },
+            { date: 'Aug-23', nav: 108000000 },
+            { date: 'Sep-23', nav: 110000000 },
+            { date: 'Oct-23', nav: 105000000 },
+            { date: 'Nov-23', nav: 108000000 },
+            { date: 'Dec-23', nav: 112000000 },
+            { date: 'Jan-24', nav: 130000000 },
+            { date: 'Feb-24', nav: 145000000 },
+            { date: 'Mar-24', nav: 155000000 },
+            { date: 'Apr-24', nav: 160000000 },
+            { date: 'May-24', nav: 165000000 },
+            { date: 'Jun-24', nav: 170000000 },
+            { date: 'Jul-24', nav: 175000000 },
+            { date: 'Aug-24', nav: 180000000 },
+            { date: 'Sep-24', nav: 205000000 },
+            { date: 'Oct-24', nav: 210000000 },
+            { date: 'Nov-24', nav: 215000000 },
+            { date: 'Dec-24', nav: 220000000 },
+            { date: 'T1-25', nav: 230000000 },
+            { date: 'T2-25', nav: 245000000 },
+            { date: 'T3-25', nav: 260000000 },
+            { date: 'T4-25', nav: 268000000 },
+            { date: 'T5-25', nav: 230000000 },
+            { date: 'T6-25', nav: 225000000 }
+        ];
+
+        let navChart; // Declare chart variable globally
+
+        function generateBarColors(count, colors) {
+            const barColors = [];
+            for (let i = 0; i < count; i++) {
+                barColors.push(colors[i % colors.length]);
+            }
+            return barColors;
+        }
+
+        function createChart() {
+            const ctx = document.getElementById('navChart').getContext('2d');
+            const labels = chartData.map(item => item.date);
+            const data = chartData.map(item => item.nav);
+            const initialColors = [
+                document.getElementById('color1').value,
+                document.getElementById('color2').value,
+                document.getElementById('color3').value
+            ];
+
+            navChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'NAV',
+                        data: data,
+                        backgroundColor: generateBarColors(data.length, initialColors),
+                        borderColor: generateBarColors(data.length, initialColors),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'NAV'
+                            },
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 });
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 });
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'NAV',
+                            font: {
+                                size: 24
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartColors() {
+            if (navChart) {
+                const newColors = [
+                    document.getElementById('color1').value,
+                    document.getElementById('color2').value,
+                    document.getElementById('color3').value
+                ];
+                navChart.data.datasets[0].backgroundColor = generateBarColors(chartData.length, newColors);
+                navChart.data.datasets[0].borderColor = generateBarColors(chartData.length, newColors);
+                navChart.update();
+            }
+        }
+
+        function populateTable() {
+            const tableBody = document.querySelector('#dataTable tbody');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            chartData.forEach((item, index) => {
+                const row = tableBody.insertRow();
+                const dateCell = row.insertCell(0);
+                const navCell = row.insertCell(1);
+                const actionCell = row.insertCell(2);
+
+                dateCell.textContent = item.date;
+                navCell.textContent = item.nav.toLocaleString('en-US', { minimumFractionDigits: 0 });
+
+                dateCell.setAttribute('contenteditable', 'true');
+                navCell.setAttribute('contenteditable', 'true');
+
+                // Add event listeners for updating data
+                dateCell.addEventListener('input', (event) => updateChartDataFromTable(index, 'date', event.target.textContent));
+                navCell.addEventListener('input', (event) => updateChartDataFromTable(index, 'nav', event.target.textContent));
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteRow(index);
+                actionCell.appendChild(deleteButton);
+            });
+        }
+
+        function updateChartDataFromTable(index, field, value) {
+            if (field === 'date') {
+                chartData[index].date = value;
+            } else if (field === 'nav') {
+                // Remove commas before parsing to number
+                const numericValue = parseFloat(value.replace(/,/g, ''));
+                if (!isNaN(numericValue)) {
+                    chartData[index].nav = numericValue;
+                }
+            }
+            updateChart(); // Update chart after data change
+        }
+
+        function addRow() {
+            const newDate = `New-${chartData.length + 1}`;
+            const newNav = 0;
+            chartData.push({ date: newDate, nav: newNav });
+            populateTable(); // Re-populate table to show new row
+            updateChart(); // Update chart with new data
+        }
+
+        function deleteRow(index) {
+            chartData.splice(index, 1);
+            populateTable();
+            updateChart();
+        }
+
+        function updateChart() {
+            if (navChart) {
+                navChart.data.labels = chartData.map(item => item.date);
+                navChart.data.datasets[0].data = chartData.map(item => item.nav);
+                // Re-apply colors based on updated data length
+                const currentColors = [
+                    document.getElementById('color1').value,
+                    document.getElementById('color2').value,
+                    document.getElementById('color3').value
+                ];
+                navChart.data.datasets[0].backgroundColor = generateBarColors(chartData.length, currentColors);
+                navChart.data.datasets[0].borderColor = generateBarColors(chartData.length, currentColors);
+                navChart.update();
+            }
+        }
+
+        // Initialize on page load
+        window.onload = () => {
+            createChart();
+            populateTable();
+        };
+    </script>
+
+</body>
+</html>
