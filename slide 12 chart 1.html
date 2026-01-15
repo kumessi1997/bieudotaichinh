@@ -25,88 +25,19 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
+            margin: 0 auto 30px;
         }
-        .controls {
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .controls button {
-            padding: 10px 15px;
-            font-size: 14px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            transition: background-color 0.3s ease;
-        }
-        .controls button:hover {
-            opacity: 0.9;
-        }
-        .controls label {
-            font-weight: bold;
-            color: #555;
-        }
-        .data-table-container {
-            width: 80%;
-            max-width: 900px;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-            color: #333;
-        }
-        td input {
-            width: 100%;
-            padding: 5px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 3px;
+        .chart-container canvas {
+            width: 100% !important;
+            height: 600px !important;
         }
     </style>
 </head>
 <body>
 
     <h1>HIGHEST URBAN POPULATION GROWTH RATE IN LAST 10YR</h1>
-
-    <div class="controls">
-        <label>Chart Color:</label>
-        <button style="background-color: #8B7053;" onclick="updateChartColor('#8B7053')">Color 1</button>
-        <button style="background-color: #071C2C;" onclick="updateChartColor('#071C2C')">Color 2</button>
-        <button style="background-color: #58595B;" onclick="updateChartColor('#58595B')">Color 3</button>
-    </div>
-
     <div class="chart-container">
         <canvas id="myBarChart"></canvas>
-    </div>
-
-    <div class="data-table-container">
-        <h2>Modify Chart Data</h2>
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>Country/Region</th>
-                    <th>Growth Rate (%)</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
     </div>
 
     <script>
@@ -122,7 +53,7 @@
         ];
 
         let chartInstance;
-        let currentChartColor = '#071C2C'; // Default color matching the image style
+        const chartColor = '#071C2C';
 
         function renderChart() {
             const labels = initialData.map(item => item.label);
@@ -141,8 +72,8 @@
                     datasets: [{
                         label: 'Urban Population Growth Rate (%)',
                         data: values,
-                        backgroundColor: currentChartColor, // Apply current color
-                        borderColor: currentChartColor,
+                        backgroundColor: chartColor,
+                        borderColor: chartColor,
                         borderWidth: 1
                     }]
                 },
@@ -198,51 +129,9 @@
             });
         }
 
-        function populateDataTable() {
-            const tableBody = document.querySelector('#dataTable tbody');
-            tableBody.innerHTML = ''; // Clear existing rows
-
-            initialData.forEach((item, index) => {
-                const row = tableBody.insertRow();
-                const labelCell = row.insertCell();
-                const valueCell = row.insertCell();
-
-                labelCell.textContent = item.label;
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.step = '0.1'; // Allow decimal input
-                input.value = item.value;
-                input.setAttribute('data-index', index); // Store index for easy update
-                input.addEventListener('change', updateDataFromTable);
-                valueCell.appendChild(input);
-            });
-        }
-
-        function updateDataFromTable(event) {
-            const index = event.target.getAttribute('data-index');
-            const newValue = parseFloat(event.target.value);
-            if (!isNaN(newValue)) {
-                initialData[index].value = newValue;
-                renderChart(); // Re-render chart with updated data
-            } else {
-                // Optionally revert to old value or show error
-                event.target.value = initialData[index].value;
-            }
-        }
-
-        function updateChartColor(color) {
-            currentChartColor = color;
-            if (chartInstance) {
-                chartInstance.data.datasets[0].backgroundColor = color;
-                chartInstance.data.datasets[0].borderColor = color;
-                chartInstance.update(); // Update chart with new color
-            }
-        }
-
         // Initial render on page load
         document.addEventListener('DOMContentLoaded', () => {
             renderChart();
-            populateDataTable();
         });
 
     </script>

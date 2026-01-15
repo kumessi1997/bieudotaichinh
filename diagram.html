@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequence Diagram (e-KYC Flow)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* 1. Base page styling */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .editor-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .editor-container label {
+            font-weight: 600;
+        }
+
+        .editor-container textarea {
+            width: 100%;
+            min-height: 260px;
+            font-family: 'Inter', 'SFMono-Regular', Consolas, Menlo, monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px;
+            resize: vertical;
+            background-color: #fafafa;
+        }
+
+        .editor-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* 2. CSS variables for dynamic colors */
+        :root {
+            /* Default colors from your requested palette */
+            --color-p1: #8B7053;
+            --color-p2: #071C2C;
+            --color-p3: #58595B;
+            --color-p4: #8B7053;
+            --color-p5: #071C2C;
+            --color-p6: #58595B;
+            --color-p7: #8B7053;
+            --color-p8: #071C2C;
+            
+            /* Text colors for contrast */
+            --text-p1: #FFFFFF;
+            --text-p2: #FFFFFF;
+            --text-p3: #FFFFFF;
+            --text-p4: #FFFFFF;
+            --text-p5: #FFFFFF;
+            --text-p6: #FFFFFF;
+            --text-p7: #FFFFFF;
+            --text-p8: #FFFFFF;
+        }
+
+        /* 3. Styling for the color controls */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .color-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-control label {
+            font-weight: 600;
+            flex-grow: 1;
+        }
+
+        .color-control input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: 1px solid #2f2f2f;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .controls-actions {
+            grid-column: 1 / -1;
+            text-align: right;
+        }
+
+        .button-primary {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            background-color: #071C2C;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .button-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-secondary {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 10px 18px;
+            border-radius: 6px;
+            border: 1px solid #071C2C;
+            background-color: transparent;
+            color: #071C2C;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .button-secondary:hover {
+            background-color: #071C2C;
+            color: #fff;
+        }
+
+        /* 4. Container for the diagram */
+        .mermaid-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>e-KYC Sequence Diagram</h1>
+
+    <!-- 6. Color Control HTML -->
+    <div class="controls">
+        <div class="color-control">
+            <label>1. Customer</label>
+            <input type="color" id="color-p1" value="#8B7053">
+        </div>
+        <div class="color-control">
+            <label>2. Bank's App</label>
+            <input type="color" id="color-p2" value="#071C2C">
+        </div>
+        <div class="color-control">
+            <label>3. FPT.eID SDK</label>
+            <input type="color" id="color-p3" value="#58595B">
+        </div>
+        <div class="color-control">
+            <label>4. Bank's Backend</label>
+            <input type="color" id="color-p4" value="#8B7053">
+        </div>
+        <div class="color-control">
+            <label>5. FPT.eID Server</label>
+            <input type="color" id="color-p5" value="#071C2C">
+        </div>
+        <div class="color-control">
+            <label>6. C06 BCA</label>
+            <input type="color" id="color-p6" value="#58595B">
+        </div>
+        <div class="color-control">
+            <label>7. FPT.eSign</label>
+            <input type="color" id="color-p7" value="#8B7053">
+        </div>
+        <div class="color-control">
+            <label>8. Tổng cục Thuế</label>
+            <input type="color" id="color-p8" value="#071C2C">
+        </div>
+        <div class="controls-actions">
+            <button class="button-primary" id="refresh-diagram">Apply colors to diagram</button>
+        </div>
+    </div>
+
+    <!-- 7. Diagram Editor -->
+    <div class="editor-container">
+        <label for="diagram-input">Mermaid definition</label>
+        <textarea id="diagram-input" spellcheck="false">sequenceDiagram
+    participant Customer
+    participant "Bank's App"
+    participant "FPT.eID SDK"
+    participant "Bank's Backend"
+    participant "FPT.eID Server"
+    participant "C06 BCA"
+    participant "FPT.eSign"
+    participant "Tổng cục Thuế"
+
+    Customer->>"Bank's App": 1. Đăng ký sử dụng dịch vụ
+    "Bank's App"->>Customer: 2. Yêu cầu chụp/tải lên Giấy DKKD/CCCD
+    
+    Customer->>"FPT.eID SDK": 3. Chụp/gửi ảnh DKKD/CCCD
+    activate "FPT.eID SDK"
+    "FPT.eID SDK"->>"FPT.eID Server": 4. Cân chỉnh và gửi ảnh DKKD/CCCD
+    deactivate "FPT.eID SDK"
+    activate "FPT.eID Server"
+    "FPT.eID Server"->>"FPT.eID Server": 5. OCR DKKD/CCCD
+    "FPT.eID Server"->>"Bank's Backend": 6. Gửi thông tin OCR DKKD
+    deactivate "FPT.eID Server"
+    activate "Bank's Backend"
+    "Bank's Backend"->>"Bank's App": 7. Gửi thông tin OCR DKKD
+    deactivate "Bank's Backend"
+    activate "Bank's App"
+    "Bank's App"->>Customer: 8. Kiểm tra lại thông tin DKKD
+    deactivate "Bank's App"
+
+    Customer->>"Bank's App": 9. Gửi thông tin DKKD
+    activate "Bank's App"
+    "Bank's App"->>"Bank's Backend": 10. Gửi thông tin DKKD
+    deactivate "Bank's App"
+    activate "Bank's Backend"
+    "Bank's Backend"->>"Tổng cục Thuế": 11. Kiểm tra thông tin với TCT
+    activate "Tổng cục Thuế"
+    "Tổng cục Thuế"->>"Bank's Backend": 12. Trả thông tin kết quả doanh nghiệp
+    deactivate "Tổng cục Thuế"
+    "Bank's Backend"->>"Bank's App": 13. Trả thông tin kết quả doanh nghiệp
+    deactivate "Bank's Backend"
+    activate "Bank's App"
+    "Bank's App"->>Customer: 14. Trả thông tin kết quả kiểm tra DKKD
+    deactivate "Bank's App"
+
+    Customer->>"Bank's App": 15. Yêu cầu đọc thẻ CCCD chip
+    activate "Bank's App"
+    "Bank's App"->>Customer: 16. Đưa thẻ vào khu vực NFC của điện thoại
+    deactivate "Bank's App"
+    
+    Customer->>"FPT.eID SDK": 17. Đọc dữ liệu (mã hóa) từ chip
+    activate "FPT.eID SDK"
+    "FPT.eID SDK"->>"Bank's Backend": 18. Gửi thông tin (mã hóa)
+    deactivate "FPT.eID SDK"
+    activate "Bank's Backend"
+    "Bank's Backend"->>"FPT.eID Server": 19. K.tra toàn vẹn, Giản mã, Đọc/sánh
+    activate "FPT.eID Server"
+    "FPT.eID Server"->>"C06 BCA": 20. Gửi thông tin (mã hóa) đã xác thực
+    activate "C06 BCA"
+    "C06 BCA"->>"C06 BCA": 21. Xác thực thông tin
+    "C06 BCA"->>"FPT.eID Server": 22. Gửi kết quả xác thực
+    deactivate "C06 BCA"
+    "FPT.eID Server"->>"Bank's Backend": 23. Gửi KQ xác thực & dữ liệu
+    deactivate "FPT.eID Server"
+    "Bank's Backend"->>"Bank's App": 24. Gửi KQ xác thực & dữ liệu
+    deactivate "Bank's Backend"
+    
+    activate "Bank's App"
+    "Bank's App"->>Customer: 25. Yêu cầu quét gương mặt
+    deactivate "Bank's App"
+    
+    Customer->>"FPT.eID SDK": 26. Quay video kiểm tra thực thể sống
+    activate "FPT.eID SDK"
+    "FPT.eID SDK"->>"FPT.eID Server": 27. Gửi dữ liệu liveness
+    deactivate "FPT.eID SDK"
+    activate "FPT.eID Server"
+    "FPT.eID Server"->>"Bank's Backend": 28. Kiểm tra và trả kết quả
+    deactivate "FPT.eID Server"
+    activate "Bank's Backend"
+    "Bank's Backend"->>"Bank's App": 29. Trả kết quả liveness
+    deactivate "Bank's Backend"
+
+    Customer->>"Bank's App": 30. Yêu cầu cấp CTS FPT
+    activate "Bank's App"
+    "Bank's App"->>Customer: 31. Chấp nhận T&C, cấp dịch vụ CKS
+    
+    Customer->>"Bank's App": 32. Đề nghị tạo dịch vụ CKS
+    "Bank's App"->>"FPT.eSign": 33. Đề nghị tạo dịch vụ CKS
+    deactivate "Bank's App"
+    activate "FPT.eSign"
+    "FPT.eSign"->>"Bank's App": 34. Trả kết quả tạo dịch vụ
+    deactivate "FPT.eSign"
+    activate "Bank's App"
+    "Bank's App"->>Customer: 35. Thông báo kết quả
+    deactivate "Bank's App"</textarea>
+        <div class="editor-actions">
+            <button class="button-secondary" id="download-svg">Download SVG</button>
+            <button class="button-primary" id="update-diagram">Update diagram</button>
+        </div>
+    </div>
+
+    <!-- 8. Mermaid Diagram Container -->
+    <div class="mermaid-container">
+        <div id="diagram-output" aria-live="polite"></div>
+    </div>
+
+    <script>
+        // 8. Mermaid Initialization
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'neutral', // Use 'neutral' theme as a base
+            fontFamily: 'Inter, sans-serif',
+            sequence: {
+                participantFontSize: 14,
+                messageFontSize: 12
+            }
+        });
+
+        const diagramState = {
+            textarea: null,
+            updateButton: null,
+            downloadButton: null,
+            output: null,
+        };
+
+        // 9. JavaScript for Color Controls
+        // This function connects the color pickers to the CSS variables
+        function setupColorControls() {
+            // Get all controls
+            const controls = [
+                { id: 'color-p1', var: '--color-p1', textVar: '--text-p1' },
+                { id: 'color-p2', var: '--color-p2', textVar: '--text-p2' },
+                { id: 'color-p3', var: '--color-p3', textVar: '--text-p3' },
+                { id: 'color-p4', var: '--color-p4', textVar: '--text-p4' },
+                { id: 'color-p5', var: '--color-p5', textVar: '--text-p5' },
+                { id: 'color-p6', var: '--color-p6', textVar: '--text-p6' },
+                { id: 'color-p7', var: '--color-p7', textVar: '--text-p7' },
+                { id: 'color-p8', var: '--color-p8', textVar: '--text-p8' },
+            ];
+
+            const rootStyles = document.documentElement.style;
+
+            controls.forEach(control => {
+                const colorInput = document.getElementById(control.id);
+                if (colorInput) {
+                    colorInput.addEventListener('input', (e) => {
+                        const newColor = e.target.value;
+                        // Set the CSS variable for the box color
+                        rootStyles.setProperty(control.var, newColor);
+                        
+                        // Automatically determine text color (black/white) for contrast
+                        const textColor = getContrastYIQ(newColor);
+                        rootStyles.setProperty(control.textVar, textColor);
+                    });
+                }
+            });
+
+            const refreshButton = document.getElementById('refresh-diagram');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', () => {
+                    renderCurrentDiagram();
+                });
+            }
+        }
+
+        // Helper function to find the best contrasting text color
+        function getContrastYIQ(hexcolor){
+            hexcolor = hexcolor.replace("#", "");
+            var r = parseInt(hexcolor.substr(0,2),16);
+            var g = parseInt(hexcolor.substr(2,2),16);
+            var b = parseInt(hexcolor.substr(4,2),16);
+            var yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? '#000000' : '#FFFFFF';
+        }
+
+        function applyParticipantColors(svgElement) {
+            if (!svgElement) return;
+
+            const cssVars = [
+                { fill: '--color-p1', text: '--text-p1' },
+                { fill: '--color-p2', text: '--text-p2' },
+                { fill: '--color-p3', text: '--text-p3' },
+                { fill: '--color-p4', text: '--text-p4' },
+                { fill: '--color-p5', text: '--text-p5' },
+                { fill: '--color-p6', text: '--text-p6' },
+                { fill: '--color-p7', text: '--text-p7' },
+                { fill: '--color-p8', text: '--text-p8' },
+            ];
+
+            const rootStyles = getComputedStyle(document.documentElement);
+            const actors = svgElement.querySelectorAll('[id^="actor"]');
+
+            actors.forEach((actorGroup, index) => {
+                if (index >= cssVars.length) return;
+                const rect = actorGroup.querySelector('rect');
+                const text = actorGroup.querySelector('text');
+                const fillColor = rootStyles.getPropertyValue(cssVars[index].fill).trim();
+                const textColor = rootStyles.getPropertyValue(cssVars[index].text).trim();
+
+                if (rect && fillColor) {
+                    rect.style.fill = fillColor;
+                    rect.style.stroke = fillColor;
+                }
+
+                if (text && textColor) {
+                    text.style.fill = textColor;
+                }
+            });
+        }
+
+        function renderDiagram(text, target, button) {
+            if (!text) {
+                target.innerHTML = '<p>Please add Mermaid syntax to render the diagram.</p>';
+                return;
+            }
+
+            button.disabled = true;
+            const renderId = `diagram-${Date.now()}`;
+            mermaid
+                .render(renderId, text)
+                .then(({ svg, bindFunctions }) => {
+                    const tempWrapper = document.createElement('div');
+                    tempWrapper.innerHTML = svg;
+                    const svgElement = tempWrapper.querySelector('svg');
+
+                    applyParticipantColors(svgElement);
+
+                    target.innerHTML = '';
+                    if (svgElement) {
+                        target.appendChild(svgElement);
+                        if (typeof bindFunctions === 'function') {
+                            bindFunctions(svgElement);
+                        }
+                    }
+                })
+                .catch((error) => {
+                    target.innerHTML = `<pre style="color: #b3261e; white-space: pre-wrap;">${error.message}</pre>`;
+                })
+                .finally(() => {
+                    button.disabled = false;
+                });
+        }
+
+        function renderCurrentDiagram() {
+            if (!diagramState.textarea || !diagramState.updateButton || !diagramState.output) return;
+            renderDiagram(diagramState.textarea.value.trim(), diagramState.output, diagramState.updateButton);
+        }
+
+        function downloadCurrentSvg() {
+            if (!diagramState.output) return;
+            const svgElement = diagramState.output.querySelector('svg');
+            if (!svgElement) {
+                alert('Please render the diagram before exporting.');
+                return;
+            }
+
+            const serializer = new XMLSerializer();
+            let svgContent = serializer.serializeToString(svgElement);
+
+            if (!svgContent.includes('xmlns="http://www.w3.org/2000/svg"')) {
+                svgContent = svgContent.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+
+            const svgBlob = new Blob(
+                ['<?xml version="1.0" encoding="UTF-8"?>\n', svgContent],
+                { type: 'image/svg+xml;charset=utf-8' }
+            );
+            const url = URL.createObjectURL(svgBlob);
+            const link = document.createElement('a');
+            const today = new Date().toISOString().slice(0, 10);
+            link.href = url;
+            link.download = `ekyc-sequence-${today}.svg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function setupDiagramEditor() {
+            const textarea = document.getElementById('diagram-input');
+            const updateButton = document.getElementById('update-diagram');
+            const output = document.getElementById('diagram-output');
+            const downloadButton = document.getElementById('download-svg');
+
+            if (!textarea || !updateButton || !output) return;
+
+            diagramState.textarea = textarea;
+            diagramState.updateButton = updateButton;
+            diagramState.output = output;
+            diagramState.downloadButton = downloadButton;
+
+            renderCurrentDiagram();
+
+            updateButton.addEventListener('click', renderCurrentDiagram);
+            if (downloadButton) {
+                downloadButton.addEventListener('click', downloadCurrentSvg);
+            }
+        }
+
+        // Run the setup when the page is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            setupColorControls();
+            setupDiagramEditor();
+        });
+    </script>
+
+</body>
+</html>

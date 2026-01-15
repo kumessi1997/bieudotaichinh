@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Stacked Column Chart for Figma</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #ffffff; /* Clean white background for embed */
+        }
+        /* Utility for 3:1 Aspect Ratio (width is 3 times height) */
+        .aspect-ratio-3-1 {
+            padding-top: 33.3333%; /* 1 / 3 = 0.3333... */
+            position: relative;
+        }
+        .aspect-ratio-3-1 canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="text-gray-800 p-0 m-0">
+
+    <div class="w-full bg-white">
+
+        <div class="aspect-ratio-3-1 max-w-full mx-auto">
+            <canvas id="myChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. INITIAL DATA (Fixed) ---
+            const chartLabels = ['2023', '2030', '2050'];
+            
+            // Fixed, high-contrast color palette for embed
+            const fixedColors = [
+                '#3C5EAA', // Deep Blue
+                '#9BB8D4', // Light Blue/Gray
+                '#E59367', // Orange/Brown
+                '#58595B', // Dark Gray
+            ];
+            
+            const chartData = {
+                labels: chartLabels,
+                datasets: [
+                    {
+                        label: 'Ammonia-fired/Waste to energy',
+                        data: [10, 15, 120],
+                        backgroundColor: fixedColors[0],
+                    },
+                    {
+                        label: 'Solar, Wind, Hydro, Biomass',
+                        data: [15, 30, 150],
+                        backgroundColor: fixedColors[1],
+                    },
+                    {
+                        label: 'Others',
+                        data: [5, 10, 20],
+                        backgroundColor: fixedColors[2],
+                    },
+                    {
+                        label: 'Coal, Gas, LNG, Import',
+                        data: [50.6, 95.5, 200],
+                        backgroundColor: fixedColors[3],
+                    }
+                ]
+            };
+            
+            // --- 2. CREATE CHART ---
+            function createChart() {
+                const ctx = document.getElementById('myChart').getContext('2d');
+                
+                Chart.defaults.font.family = 'Open Sans';
+                Chart.defaults.color = '#58595B'; // General text color
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        // Crucial for maintaining aspect ratio in the container
+                        responsive: true,
+                        maintainAspectRatio: false, // Must be false when using a CSS aspect ratio container
+                        
+                        plugins: {
+                            // Legend is now essential as the category table is gone
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 20,
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    // Custom tooltip to show sum
+                                    footer: (tooltipItems) => {
+                                        let sum = 0;
+                                        tooltipItems.forEach(function(tooltipItem) {
+                                            sum += tooltipItem.parsed.y;
+                                        });
+                                        return 'Total: ' + sum.toFixed(1);
+                                    },
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'PDPVIII Target Analysis', // Re-added title for context
+                                font: {
+                                    size: 18,
+                                    weight: 'bold'
+                                },
+                                padding: {
+                                    top: 10,
+                                    bottom: 10
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                grid: {
+                                    drawBorder: false,
+                                },
+                                ticks: {
+                                    callback: (value) => value // Simple value display
+                                }
+                            },
+                            x: {
+                                stacked: true,
+                                grid: {
+                                    display: false,
+                                }
+                            }
+                        },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    }
+                });
+            }
+
+            // --- 3. INITIALIZE APP ---
+            createChart();
+        });
+    </script>
+
+</body>
+</html>

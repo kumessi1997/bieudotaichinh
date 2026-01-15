@@ -41,6 +41,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             box-sizing: border-box;
+            height: 700px; /* Set a fixed height for the chart container */
         }
         
         /* Main layout for controls and data */
@@ -359,10 +360,10 @@
             chartData.forEach((row, index) => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-                    <td><input type="text" value="${row.label}" onchange="editData(${index}, 'label', this.value)"></td>
-                    <td><input type="number" step="0.01" value="${row.bmff}" onchange="editData(${index}, 'bmff', this.value)"></td>
-                    <td><input type="number" step="0.01" value="${row.vnindex}" onchange="editData(${index}, 'vnindex', this.value)"></td>
-                    <td><button class="btn-delete" onclick="deleteRow(${index})">Delete</button></td>
+                    <td><input type="text" value="{row.label}" onchange="editData({index}, 'label', this.value)"></td>
+                    <td><input type="number" step="0.01" value="{row.bmff}" onchange="editData({index}, 'bmff', this.value)"></td>
+                    <td><input type="number" step="0.01" value="{row.vnindex}" onchange="editData({index}, 'vnindex', this.value)"></td>
+                    <td><button class="btn-delete" onclick="deleteRow({index})">Delete</button></td>
                 `;
                 tableBody.appendChild(tr);
             });

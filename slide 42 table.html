@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Thông tin Quỹ (Có thể chỉnh sửa)</title>
+    <style>
+        :root {
+            /* 1. Các biến CSS cho màu sắc. 
+               Chúng sẽ được cập nhật bởi JavaScript.
+               Màu mặc định được lấy từ yêu cầu của bạn.
+            */
+            --header-bg-color: #071C2C;
+            --header-text-color: #FFFFFF;
+            --border-color: #58595B;
+            --data-text-color: #071C2C;
+            --row-shaded-bg: #f0f0f0;
+            --title-text-color: #8B7053;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 2. Bảng điều khiển màu sắc */
+        .controls {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            border: 1px solid #ddd;
+        }
+
+        .color-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-group label {
+            font-size: 0.9em;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .color-group input[type="color"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border: 1px solid #ccc;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            border-radius: 5px;
+            background-color: transparent;
+        }
+        .color-group input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-group input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
+        .color-group input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
+        
+        /* 3. Kiểu chung cho cả hai bảng */
+        .editable-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            color: var(--data-text-color);
+        }
+
+        .editable-table thead th {
+            padding: 12px 10px;
+            text-align: left;
+            font-size: 0.9em;
+            font-weight: 700;
+        }
+        
+        .editable-table tbody td {
+            padding: 12px 10px;
+            font-size: 0.95em;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* 4. Kiểu cho nội dung có thể chỉnh sửa */
+        [contenteditable="true"] {
+            cursor: text;
+            padding: 5px;
+            border-radius: 3px;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        [contenteditable="true"]:hover {
+            background-color: #f4f4f4;
+        }
+        [contenteditable="true"]:focus {
+            background-color: #fff;
+            outline: none;
+            box-shadow: 0 0 0 2px #007bff; /* Viền xanh khi focus */
+        }
+        
+        /* 5. Kiểu riêng cho Bảng Indicators */
+        #indicators-table thead th {
+            background-color: var(--header-bg-color);
+            color: var(--header-text-color);
+            border-bottom: 2px solid var(--border-color);
+        }
+        #indicators-table thead th:not(:first-child) {
+            text-align: right;
+        }
+        #indicators-table tbody td:not(:first-child) {
+            text-align: right;
+            font-weight: 500;
+        }
+        #indicators-table tbody tr:nth-child(odd) {
+             background-color: var(--row-shaded-bg);
+        }
+
+        /* 6. Kiểu riêng cho Bảng Holdings */
+         #holdings-table thead th {
+            color: var(--title-text-color);
+            border-bottom: 2px solid var(--border-color);
+        }
+        #holdings-table thead th:last-child {
+            text-align: right;
+        }
+        #holdings-table tbody td:last-child {
+            text-align: right;
+            font-weight: 500;
+        }
+        #holdings-table tbody tr {
+            background-color: var(--row-shaded-bg);
+            border-bottom: 2px solid #fff; /* Đường kẻ trắng phân cách */
+        }
+         #holdings-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- Bảng điều khiển màu sắc -->
+        <div class="controls">
+            <div class="color-group">
+                <label for="titleTextColor">Tiêu đề (Nâu):</label>
+                <input type="color" id="titleTextColor" value="#8B7053">
+            </div>
+            <div class="color-group">
+                <label for="headerBgColor">Nền tiêu đề (Xanh):</label>
+                <input type="color" id="headerBgColor" value="#071C2C">
+            </div>
+             <div class="color-group">
+                <label for="headerTextColor">Chữ tiêu đề (Trắng):</label>
+                <input type="color" id="headerTextColor" value="#FFFFFF">
+            </div>
+            <div class="color-group">
+                <label for="borderColor">Đường kẻ (Xám):</label>
+                <input type="color" id="borderColor" value="#58595B">
+            </div>
+            <div class="color-group">
+                <label for="dataTextColor">Màu chữ dữ liệu:</label>
+                <input type="color" id="dataTextColor" value="#071C2C">
+            </div>
+            <div class="color-group">
+                <label for="rowShadedColor">Nền hàng (Xám nhạt):</label>
+                <input type="color" id="rowShadedColor" value="#f0f0f0">
+            </div>
+        </div>
+
+        <!-- New Table: Fund Information -->
+        <h2 style="color: #071C2C; border-bottom: 2px solid #071C2C; padding-bottom: 5px; margin-bottom: 15px; font-size: 1.2em;">FUND INFORMATION</h2>
+        <table class="editable-table" id="fund-info-table" style="margin-top: 0;">
+            <tbody>
+                <tr>
+                    <td contenteditable="true">Inception Date</td>
+                    <td contenteditable="true" style="text-align: right;">14/02/2023</td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">Trading Frequency</td>
+                    <td contenteditable="true" style="text-align: right;">Every working day</td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">Supervisory Bank</td>
+                    <td contenteditable="true" style="text-align: right;">BIDV</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Bảng 1: Indicators (Có thể chỉnh sửa) -->
+        <table class="editable-table" id="indicators-table">
+            <thead>
+                <tr>
+                    <th scope="col" contenteditable="true">Indicators</th>
+                    <th scope="col" contenteditable="true">BMFF</th>
+                    <th scope="col" contenteditable="true">VN-INDEX</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td contenteditable="true">P/E trailing (12 months)</td>
+                    <td contenteditable="true">11,5</td>
+                    <td contenteditable="true">15,5</td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">P/B</td>
+                    <td contenteditable="true">1,6</td>
+                    <td contenteditable="true">1,9</td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">P/E forward 2025</td>
+                    <td contenteditable="true">10,0</td>
+                    <td contenteditable="true"></td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">Equities Proportion</td>
+                    <td contenteditable="true">50,78%</td>
+                    <td contenteditable="true"></td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">Cash and Fixed Income Instruments Proportion</td>
+                    <td contenteditable="true">49,22%</td>
+                    <td contenteditable="true"></td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">NAV/ Fund Unit</td>
+                    <td contenteditable="true">15.997</td>
+                    <td contenteditable="true"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Bảng 2: Top Security Holdings (Có thể chỉnh sửa) -->
+        <table class="editable-table" id="holdings-table">
+            <thead>
+                <tr>
+                    <th scope="col" contenteditable="true">Top Security Holdings</th>
+                    <th scope="col" contenteditable="true">%NAV</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td contenteditable="true">ACB</td>
+                    <td contenteditable="true">11,81%</td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">TCB</td>
+                    <td contenteditable="true">6,86%</td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">VIB</td>
+                    <td contenteditable="true">5,34%</td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">PVT</td>
+                    <td contenteditable="true">4,53%</td>
+                </tr>
+                <tr>
+_                    <td contenteditable="true">QNS</td>
+                    <td contenteditable="true">3,43%</td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">HPG</td>
+                    <td contenteditable="true">3,30%</td>
+                </tr>
+                <tr>
+                    <td contenteditable="true">PNJ</td>
+                    <td contents="true">2,53%</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 7. JavaScript để cập nhật màu sắc
+        
+        const root = document.documentElement;
+
+        const controls = {
+            titleTextColor: document.getElementById('titleTextColor'),
+            headerBgColor: document.getElementById('headerBgColor'),
+            headerTextColor: document.getElementById('headerTextColor'),
+            borderColor: document.getElementById('borderColor'),
+            dataTextColor: document.getElementById('dataTextColor'),
+            rowShadedColor: document.getElementById('rowShadedColor')
+        };
+
+        function applyColors() {
+            root.style.setProperty('--title-text-color', controls.titleTextColor.value);
+            root.style.setProperty('--header-bg-color', controls.headerBgColor.value);
+            root.style.setProperty('--header-text-color', controls.headerTextColor.value);
+            root.style.setProperty('--border-color', controls.borderColor.value);
+            root.style.setProperty('--data-text-color', controls.dataTextColor.value);
+            root.style.setProperty('--row-shaded-bg', controls.rowShadedColor.value);
+        }
+
+        for (let key in controls) {
+            controls[key].addEventListener('input', applyColors);
+        }
+
+        applyColors();
+    </script>
+</body>
+</html>

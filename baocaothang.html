@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh Mục Đầu Tư</title>
+    <!-- Tải thư viện Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Các biến màu CSS có thể thay đổi bằng JS */
+            --header-bg-color: #071C2C;      /* Xanh đậm */
+            --header-text-color: #FFFFFF;
+            --nav-row-bg-color: #8B7053;     /* Nâu */
+            --nav-row-text-color: #FFFFFF;
+            --border-color: #58595B;         /* Xám */
+            --row-odd-bg: #EDF7FF;           /* Xanh nhạt */
+            --row-even-bg: #FFFFFF;
+            --text-color: #000000;
+            --highlight-color: #007bff;
+            --btn-danger: #e74c3c;
+            --btn-success: #27ae60;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: var(--header-bg-color);
+            border-bottom: 2px solid var(--nav-row-bg-color);
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+
+        /* --- Bảng Điều Khiển --- */
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #e9e9e9;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .controls-section {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .controls-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .controls-section h3 {
+            margin-top: 0;
+            font-size: 1em;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        input[type="color"] {
+            border: none;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            background: none;
+        }
+
+        /* --- Bảng Dữ Liệu --- */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border-color);
+            font-size: 0.9em;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+            text-align: right; /* Mặc định căn phải cho số liệu */
+        }
+
+        /* Căn trái cho cột Tài sản */
+        td:nth-child(2), th:nth-child(2) {
+            text-align: left;
+        }
+        /* Căn giữa cho cột STT */
+        td:nth-child(1), th:nth-child(1) {
+            text-align: center;
+        }
+
+        thead th {
+            background-color: var(--header-bg-color);
+            color: var(--header-text-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            vertical-align: middle;
+        }
+
+        /* Màu nền xen kẽ cho các hàng dữ liệu */
+        tbody tr:nth-child(odd) {
+            background-color: var(--row-odd-bg);
+        }
+        tbody tr:nth-child(even) {
+            background-color: var(--row-even-bg);
+        }
+
+        /* Hàng Nhóm (I Cổ phiếu niêm yết) */
+        .group-row td {
+            font-weight: bold;
+            background-color: #ffffff;
+            text-align: left;
+        }
+
+        /* Hàng Tổng kết (Tiền, Cổ phiếu, NAV) */
+        .summary-row td {
+            font-weight: bold;
+            background-color: #dceeff;
+        }
+
+        /* Hàng NAV cuối cùng */
+        .nav-row td {
+            background-color: var(--nav-row-bg-color) !important;
+            color: var(--nav-row-text-color);
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        /* --- Chế độ Chỉnh sửa --- */
+        [contenteditable="true"] {
+            cursor: text;
+            transition: background 0.2s;
+        }
+        [contenteditable="true"]:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        [contenteditable="true"]:focus {
+            outline: 2px solid var(--highlight-color);
+            background-color: #fff;
+            color: #000;
+        }
+
+        /* --- Buttons --- */
+        .action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-size: 0.85em;
+        }
+        .btn-delete {
+            background-color: var(--btn-danger);
+        }
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+        .btn-add {
+            background-color: var(--btn-success);
+            font-size: 1em;
+            padding: 8px 15px;
+            margin-top: 10px;
+        }
+        .btn-add:hover {
+            background-color: #219150;
+        }
+        #updateChartBtn {
+            background-color: var(--nav-row-bg-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        #updateChartBtn:hover {
+            opacity: 0.9;
+        }
+
+        /* --- Phần Biểu Đồ --- */
+        .chart-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+            text-align: center;
+        }
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- Bảng điều khiển màu sắc -->
+    <div class="controls">
+        <!-- Phần Màu Bảng -->
+        <div class="controls-section">
+            <h3>Table Colors</h3>
+            <div class="controls-row">
+                <div class="control-group">
+                    <label>Tiêu đề (Nền):</label>
+                    <input type="color" id="headerBgColor" value="#071C2C">
+                </div>
+                <div class="control-group">
+                    <label>Tiêu đề (Chữ):</label>
+                    <input type="color" id="headerTextColor" value="#FFFFFF">
+                </div>
+                <div class="control-group">
+                    <label>NAV (Nền):</label>
+                    <input type="color" id="navBgColor" value="#8B7053">
+                </div>
+                <div class="control-group">
+                    <label>Viền bảng:</label>
+                    <input type="color" id="borderColor" value="#58595B">
+                </div>
+                <div class="control-group">
+                    <label>Hàng lẻ (Nền):</label>
+                    <input type="color" id="oddRowColor" value="#EDF7FF">
+                </div>
+                <div class="control-group">
+                    <label>Hàng chẵn (Nền):</label>
+                    <input type="color" id="evenRowColor" value="#FFFFFF">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Phần Màu Biểu Đồ (THÊM MỚI) -->
+        <div class="controls-section">
+            <h3>Chart Palette</h3>
+            <div class="controls-row">
+                <div class="control-group">
+                    <label>Màu 1:</label>
+                    <input type="color" id="chartColor1" value="#071C2C">
+                </div>
+                <div class="control-group">
+                    <label>Màu 2:</label>
+                    <input type="color" id="chartColor2" value="#8B7053">
+                </div>
+                <div class="control-group">
+                    <label>Màu 3:</label>
+                    <input type="color" id="chartColor3" value="#58595B">
+                </div>
+                <div class="control-group">
+                    <label>Màu 4:</label>
+                    <input type="color" id="chartColor4" value="#2980b9">
+                </div>
+                <div class="control-group">
+                    <label>Màu 5:</label>
+                    <input type="color" id="chartColor5" value="#8e44ad">
+                </div>
+                <div class="control-group">
+                    <label>Màu 6:</label>
+                    <input type="color" id="chartColor6" value="#16a085">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BẢNG 1: LIST OF STOCK -->
+    <h2>List of Stocks</h2>
+    <div class="table-wrapper">
+        <table id="stock-table">
+            <thead>
+                <tr>
+                    <th width="5%">STT</th>
+                    <th width="10%">Tài sản</th>
+                    <th>Khối lượng</th>
+                    <th>Giá vốn</th>
+                    <th>Giá thị trường</th>
+                    <th>Giá trị thị trường</th>
+                    <th>Tỷ trọng</th>
+                    <th>Lãi/Lỗ</th>
+                    <th width="5%">Xóa</th> <!-- Cột Hành động -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Hàng nhóm -->
+                <tr class="group-row">
+                    <td contenteditable="true">I</td>
+                    <td contenteditable="true" colspan="7">Cổ phiếu niêm yết</td>
+                    <td></td>
+                </tr>
+                
+                <!-- Dữ liệu Cổ phiếu -->
+                <tr class="stock-row">
+                    <td class="stt">1</td>
+                    <td contenteditable="true" class="stock-symbol">ACB</td>
+                    <td contenteditable="true">10.000</td>
+                    <td contenteditable="true">25.125</td>
+                    <td contenteditable="true">25.500</td>
+                    <td contenteditable="true" class="stock-value">255.000.000</td>
+                    <td contenteditable="true">1,29%</td>
+                    <td contenteditable="true">1,49%</td>
+                    <td style="text-align: center;"><button class="action-btn btn-delete" onclick="deleteRow(this)">X</button></td>
+                </tr>
+                <tr class="stock-row">
+                    <td class="stt">2</td>
+                    <td contenteditable="true" class="stock-symbol">CTG</td>
+                    <td contenteditable="true">5.000</td>
+                    <td contenteditable="true">47.948</td>
+                    <td contenteditable="true">49.000</td>
+                    <td contenteditable="true" class="stock-value">245.000.000</td>
+                    <td contenteditable="true">1,24%</td>
+                    <td contenteditable="true">2,19%</td>
+                    <td style="text-align: center;"><button class="action-btn btn-delete" onclick="deleteRow(this)">X</button></td>
+                </tr>
+                <tr class="stock-row">
+                    <td class="stt">3</td>
+                    <td contenteditable="true" class="stock-symbol">HPG</td>
+                    <td contenteditable="true">10.000</td>
+                    <td contenteditable="true">26.276</td>
+                    <td contenteditable="true">26.700</td>
+                    <td contenteditable="true" class="stock-value">267.000.000</td>
+                    <td contenteditable="true">1,35%</td>
+                    <td contenteditable="true">1,61%</td>
+                    <td style="text-align: center;"><button class="action-btn btn-delete" onclick="deleteRow(this)">X</button></td>
+                </tr>
+                <tr class="stock-row">
+                    <td class="stt">4</td>
+                    <td contenteditable="true" class="stock-symbol">IJC</td>
+                    <td contenteditable="true">15.000</td>
+                    <td contenteditable="true">11.712</td>
+                    <td contenteditable="true">12.200</td>
+                    <td contenteditable="true" class="stock-value">183.000.000</td>
+                    <td contenteditable="true">0,93%</td>
+                    <td contenteditable="true">4,17%</td>
+                    <td style="text-align: center;"><button class="action-btn btn-delete" onclick="deleteRow(this)">X</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- Nút thêm hàng mới -->
+    <button class="action-btn btn-add" onclick="addStockRow()">+ Thêm Cổ phiếu</button>
+
+    <!-- BẢNG 2: LIST OF ASSET -->
+    <h2>List of Assets</h2>
+    <div class="table-wrapper">
+        <table id="asset-table">
+            <thead>
+                <tr>
+                    <th width="5%">STT</th>
+                    <th width="10%">Tài sản</th>
+                    <th>Khối lượng</th>
+                    <th>Giá vốn</th>
+                    <th>Giá thị trường</th>
+                    <th>Giá trị thị trường</th>
+                    <th>Tỷ trọng</th>
+                    <th>Lãi/Lỗ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Phần Tổng kết -->
+                <tr class="summary-row" id="cash-row">
+                    <td></td>
+                    <td contenteditable="true" style="text-align: left;">Tiền và tương đương tiền</td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true" class="asset-value">17.524.950.289</td>
+                    <td contenteditable="true">88,69%</td>
+                    <td contenteditable="true"></td>
+                </tr>
+                <tr class="summary-row">
+                    <td></td>
+                    <td contenteditable="true" style="text-align: left;">Cổ phiếu</td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true">2.234.750.000</td>
+                    <td contenteditable="true">11,31%</td>
+                    <td contenteditable="true"></td>
+                </tr>
+                
+                <!-- Hàng NAV -->
+                <tr class="nav-row">
+                    <td></td>
+                    <td contenteditable="true" style="text-align: left;">NAV</td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true">19.759.700.289</td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- BIỂU ĐỒ TRÒN -->
+    <div class="chart-section">
+        <h2>Portfolio Allocation (Stocks + Cash)</h2>
+        <button id="updateChartBtn">Cập nhật Biểu đồ</button>
+        <div class="chart-container">
+            <canvas id="portfolioChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- Logic đổi màu (giữ nguyên) ---
+    const root = document.documentElement;
+    const inputs = {
+        headerBgColor: '--header-bg-color',
+        headerTextColor: '--header-text-color',
+        navBgColor: '--nav-row-bg-color',
+        borderColor: '--border-color',
+        oddRowColor: '--row-odd-bg',
+        evenRowColor: '--row-even-bg'
+    };
+
+    for (const [id, cssVar] of Object.entries(inputs)) {
+        const input = document.getElementById(id);
+        if(input) {
+            input.addEventListener('input', (e) => {
+                root.style.setProperty(cssVar, e.target.value);
+            });
+        }
+    }
+
+    // --- Logic Thêm/Xóa Hàng ---
+    
+    // Cập nhật số thứ tự (STT)
+    function updateSTT() {
+        const rows = document.querySelectorAll('#stock-table tbody tr.stock-row');
+        rows.forEach((row, index) => {
+            const sttCell = row.querySelector('.stt');
+            if(sttCell) sttCell.innerText = index + 1;
+        });
+    }
+
+    // Thêm hàng mới
+    function addStockRow() {
+        const tbody = document.querySelector('#stock-table tbody');
+        const newRow = document.createElement('tr');
+        newRow.className = 'stock-row';
+        newRow.innerHTML = `
+            <td class="stt"></td>
+            <td contenteditable="true" class="stock-symbol">NEW</td>
+            <td contenteditable="true">0</td>
+            <td contenteditable="true">0</td>
+            <td contenteditable="true">0</td>
+            <td contenteditable="true" class="stock-value">0</td>
+            <td contenteditable="true">0%</td>
+            <td contenteditable="true">0%</td>
+            <td style="text-align: center;"><button class="action-btn btn-delete" onclick="deleteRow(this)">X</button></td>
+        `;
+        tbody.appendChild(newRow);
+        updateSTT();
+    }
+
+    // Xóa hàng
+    function deleteRow(btn) {
+        if(confirm('Bạn có chắc muốn xóa dòng này không?')) {
+            const row = btn.closest('tr');
+            row.remove();
+            updateSTT();
+        }
+    }
+
+
+    // --- Logic Biểu Đồ ---
+    let myPieChart;
+
+    function parseCurrency(str) {
+        if (!str) return 0;
+        const cleanStr = str.replace(/\./g, '').replace(/\s/g, '').replace(/,/g, '.');
+        return parseFloat(cleanStr) || 0;
+    }
+
+    function updateChart() {
+        const labels = [];
+        const dataValues = [];
+
+        // 1. Lấy dữ liệu Cổ phiếu từ Bảng 1
+        const stockRows = document.querySelectorAll('#stock-table tbody tr.stock-row');
+        stockRows.forEach(row => {
+            const symbolCell = row.querySelector('.stock-symbol');
+            const valueCell = row.querySelector('.stock-value');
+            
+            if (symbolCell && valueCell) {
+                const symbol = symbolCell.innerText.trim();
+                const value = parseCurrency(valueCell.innerText);
+                
+                if (symbol && value > 0) {
+                    labels.push(symbol);
+                    dataValues.push(value);
+                }
+            }
+        });
+
+        // 2. Lấy dữ liệu Tiền mặt từ Bảng 2
+        const cashRow = document.getElementById('cash-row');
+        if (cashRow) {
+            const cashValueCell = cashRow.querySelector('.asset-value');
+            if (cashValueCell) {
+                const cashVal = parseCurrency(cashValueCell.innerText);
+                if (cashVal > 0) {
+                    labels.push("Cash");
+                    dataValues.push(cashVal);
+                }
+            }
+        }
+
+        // 3. Cấu hình màu sắc (Lấy từ các ô input mới)
+        const chartColors = [];
+        for(let i = 1; i <= 6; i++) {
+            const colorInput = document.getElementById(`chartColor${i}`);
+            if(colorInput) {
+                chartColors.push(colorInput.value);
+            }
+        }
+        // Lặp lại mảng màu nếu dữ liệu nhiều hơn số màu
+        const finalColors = [];
+        while(finalColors.length < labels.length) {
+            finalColors.push(...chartColors);
+        }
+
+        // 4. Vẽ hoặc Cập nhật biểu đồ
+        const ctx = document.getElementById('portfolioChart').getContext('2d');
+
+        if (myPieChart) {
+            myPieChart.destroy();
+        }
+
+        myPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: finalColors.slice(0, labels.length),
+                    borderWidth: 1,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { font: { size: 12 } }
+                    },
+                    title: {
+                        display: false,
+                        text: 'Portfolio Allocation'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) { label += ': '; }
+                                const value = context.parsed;
+                                label += new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+                                const total = context.chart._metasets[context.datasetIndex].total;
+                                const percentage = ((value / total) * 100).toFixed(2) + '%';
+                                return label + ' (' + percentage + ')';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Lắng nghe sự kiện thay đổi màu chart để cập nhật ngay lập tức
+    for(let i = 1; i <= 6; i++) {
+        const colorInput = document.getElementById(`chartColor${i}`);
+        if(colorInput) {
+            colorInput.addEventListener('input', updateChart);
+        }
+    }
+
+    document.getElementById('updateChartBtn').addEventListener('click', updateChart);
+    window.onload = function() {
+        updateSTT();
+        updateChart();
+    };
+
+</script>
+
+</body>
+</html>
